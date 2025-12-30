@@ -432,6 +432,15 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            // Handle external links
+            document.addEventListener('click', (e) => {
+                const link = e.target.closest('a');
+                if (link && link.href.startsWith('http')) {
+                    e.preventDefault();
+                    window.noteAPI?.openExternal(link.href);
+                }
+            });
+
             // Listen for note loading
             if (window.noteAPI) {
                 window.noteAPI.onLoadNote(async (noteId) => {
@@ -524,15 +533,60 @@
 
         // Add tag
         document.getElementById('addTagBtn').addEventListener('click', () => {
-            const tagName = prompt('Enter tag name:');
-            if (tagName && tagName.trim()) {
-                const cleanTag = tagName.trim().toLowerCase().replace(/^#/, '');
-                if (!tags.includes(cleanTag)) {
-                    tags.push(cleanTag);
-                    renderTags();
-                    markUnsaved();
+            const container = document.getElementById('tagsContainer');
+            const addBtn = document.getElementById('addTagBtn');
+
+            // Hide add button
+            addBtn.classList.add('hidden');
+
+            // Create input
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'bg-transparent border-none text-xs text-gray-700 dark:text-gray-300 focus:ring-0 focus:outline-none h-6 w-20 px-1';
+            input.placeholder = 'Tag...';
+
+            // Container for input
+            const inputWrapper = document.createElement('div');
+            inputWrapper.className = 'flex items-center h-7 rounded-full bg-gray-100 dark:bg-[#232f48] border border-primary pl-2 pr-1 transition-colors';
+            inputWrapper.appendChild(input);
+
+            // Insert before add button
+            container.insertBefore(inputWrapper, addBtn);
+
+            input.focus();
+
+            // Handle commit
+            const commitTag = () => {
+                const tagName = input.value.trim();
+                let added = false;
+                if (tagName) {
+                    const cleanTag = tagName.toLowerCase().replace(/^#/, '');
+                    if (!tags.includes(cleanTag)) {
+                        tags.push(cleanTag);
+                        markUnsaved();
+                        added = true;
+                    }
                 }
-            }
+                cleanup();
+            };
+
+            const cleanup = () => {
+                inputWrapper.remove();
+                addBtn.classList.remove('hidden');
+                renderTags(); // Re-render to show new tag and put button at end
+            };
+
+            input.addEventListener('blur', commitTag);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    input.blur(); // Triggers commitTag
+                } else if (e.key === 'Escape') {
+                    // Just remove
+                    inputWrapper.remove();
+                    addBtn.classList.remove('hidden');
+                }
+            });
         });
 
         // Window controls

@@ -1,35 +1,57 @@
-const { app, BrowserWindow, ipcMain, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, globalShortcut, dialog, shell } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 
-// Initialize data store - save to project directory instead of AppData
-const store = new Store({
-    name: 'notes-data',
-    cwd: path.join(__dirname, 'data'), // Save to project/data folder
-    defaults: {
-        notes: [],
-        settings: {
-            floatingBallPosition: null
-        }
-    }
+// Config store to hold the data path preference
+const configStore = new Store({
+    name: 'config',
+    // We stick to default user data for the config itself
 });
+
+// Determine data path
+const defaultDataPath = path.join(__dirname, 'data');
+let currentDataPath = configStore.get('dataPath', defaultDataPath);
+let currentImagesPath;
+
+// Initialize data store
+let store;
+function initStore() {
+    store = new Store({
+        name: 'notes-data',
+        cwd: currentDataPath,
+        defaults: {
+            notes: [],
+            settings: {
+                floatingBallPosition: null,
+                globalShortcut: 'Alt+1' // Default shortcut
+            }
+        }
+    });
+
+    // Ensure data directories exist
+    ensureDataDirs(currentDataPath);
+}
+
+// Ensure data directories exist
+function ensureDataDirs(basePath) {
+    currentImagesPath = path.join(basePath, 'images');
+    if (!fs.existsSync(basePath)) {
+        fs.mkdirSync(basePath, { recursive: true });
+    }
+    if (!fs.existsSync(currentImagesPath)) {
+        fs.mkdirSync(currentImagesPath, { recursive: true });
+    }
+}
+
+// Initialize immediately
+initStore();
 
 // Window references
 let floatingBallWindow = null;
 let quickNoteWindow = null;
 let noteManagerWindow = null;
-
-// Ensure data directories exist in project folder
-const dataPath = path.join(__dirname, 'data');
-const imagesPath = path.join(dataPath, 'images');
-if (!fs.existsSync(dataPath)) {
-    fs.mkdirSync(dataPath, { recursive: true });
-}
-if (!fs.existsSync(imagesPath)) {
-    fs.mkdirSync(imagesPath, { recursive: true });
-}
 
 // Create floating ball window
 function createFloatingBallWindow() {
@@ -60,7 +82,24 @@ function createFloatingBallWindow() {
 
     floatingBallWindow.loadFile(path.join(__dirname, 'src', 'floating-ball', 'index.html'));
 
-    // Save position when window is moved
+    // Handle external links (window.open)
+    floatingBallWindow.webContents.setWindowOpenHandler(({ url }) => {
+        if (url.startsWith('http:') || url.startsWith('https:')) {
+            shell.openExternal(url);
+            return { action: 'deny' };
+        }
+        return { action: 'allow' };
+    });
+
+    // Handle internal navigation (a href click)
+    floatingBallWindow.webContents.on('will-navigate', (event, url) => {
+        if (url.startsWith('http:') || url.startsWith('https:')) {
+            event.preventDefault();
+            shell.openExternal(url);
+        }
+    });
+
+    // Save position when window moves
     floatingBallWindow.on('moved', () => {
         const [x, y] = floatingBallWindow.getPosition();
         store.set('settings.floatingBallPosition', { x, y });
@@ -69,6 +108,38 @@ function createFloatingBallWindow() {
     floatingBallWindow.on('closed', () => {
         floatingBallWindow = null;
     });
+}
+
+// Global Shortcut Handler
+function registerGlobalShortcut() {
+    // Unregister all first
+    globalShortcut.unregisterAll();
+
+    const shortcut = store.get('settings.globalShortcut', 'Alt+1');
+    if (!shortcut) return;
+
+    try {
+        // Electron accelerator for "Alt+Num1" depends on platform/keyboard
+        // We'll trust the user/default string.
+        const ret = globalShortcut.register(shortcut, () => {
+            // Toggle floating ball visibility
+            if (floatingBallWindow) {
+                if (floatingBallWindow.isVisible()) {
+                    floatingBallWindow.hide();
+                } else {
+                    floatingBallWindow.show();
+                }
+            } else {
+                createFloatingBallWindow();
+            }
+        });
+
+        if (!ret) {
+            console.warn('Registration failed for shortcut:', shortcut);
+        }
+    } catch (error) {
+        console.error('Error registering shortcut:', error);
+    }
 }
 
 // Create quick note window
@@ -102,6 +173,23 @@ function createQuickNoteWindow(noteId = null) {
     });
 
     quickNoteWindow.loadFile(path.join(__dirname, 'src', 'quick-note', 'index.html'));
+
+    // Handle external links (window.open)
+    quickNoteWindow.webContents.setWindowOpenHandler(({ url }) => {
+        if (url.startsWith('http:') || url.startsWith('https:')) {
+            shell.openExternal(url);
+            return { action: 'deny' };
+        }
+        return { action: 'allow' };
+    });
+
+    // Handle internal navigation (a href click)
+    quickNoteWindow.webContents.on('will-navigate', (event, url) => {
+        if (url.startsWith('http:') || url.startsWith('https:')) {
+            event.preventDefault();
+            shell.openExternal(url);
+        }
+    });
 
     quickNoteWindow.on('closed', () => {
         quickNoteWindow = null;
@@ -143,6 +231,23 @@ function createNoteManagerWindow() {
 
     noteManagerWindow.loadFile(path.join(__dirname, 'src', 'note-manager', 'index.html'));
 
+    // Handle external links (window.open)
+    noteManagerWindow.webContents.setWindowOpenHandler(({ url }) => {
+        if (url.startsWith('http:') || url.startsWith('https:')) {
+            shell.openExternal(url);
+            return { action: 'deny' };
+        }
+        return { action: 'allow' };
+    });
+
+    // Handle internal navigation (a href click)
+    noteManagerWindow.webContents.on('will-navigate', (event, url) => {
+        if (url.startsWith('http:') || url.startsWith('https:')) {
+            event.preventDefault();
+            shell.openExternal(url);
+        }
+    });
+
     noteManagerWindow.on('closed', () => {
         noteManagerWindow = null;
     });
@@ -151,6 +256,7 @@ function createNoteManagerWindow() {
 // App ready
 app.whenReady().then(() => {
     createFloatingBallWindow();
+    registerGlobalShortcut();
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
@@ -166,7 +272,66 @@ app.on('window-all-closed', () => {
     }
 });
 
+// Clean up shortcuts
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
+});
+
+
 // ==================== IPC Handlers ====================
+
+// Settings Handlers
+ipcMain.handle('get-settings', () => {
+    return {
+        dataPath: currentDataPath,
+        globalShortcut: store.get('settings.globalShortcut', 'Alt+1')
+    };
+});
+
+ipcMain.handle('save-settings', (event, newSettings) => {
+    let restartRequired = false;
+
+    // Handle Shortcut
+    const oldShortcut = store.get('settings.globalShortcut');
+    if (newSettings.globalShortcut && newSettings.globalShortcut !== oldShortcut) {
+        store.set('settings.globalShortcut', newSettings.globalShortcut);
+        registerGlobalShortcut();
+    }
+
+    // Handle Data Path
+    if (newSettings.dataPath && newSettings.dataPath !== currentDataPath) {
+        configStore.set('dataPath', newSettings.dataPath);
+        currentDataPath = newSettings.dataPath;
+
+        // Re-init store
+        initStore();
+
+        // Notify windows to reload data
+        if (noteManagerWindow) {
+            noteManagerWindow.webContents.send('notes-updated');
+        }
+        restartRequired = true;
+    }
+
+    return { success: true, restartRequired };
+});
+
+ipcMain.handle('select-directory', async () => {
+    const result = await dialog.showOpenDialog(noteManagerWindow, {
+        properties: ['openDirectory']
+    });
+    if (!result.canceled && result.filePaths.length > 0) {
+        return result.filePaths[0];
+    }
+    return null;
+});
+
+ipcMain.handle('check-shortcut-conflict', (event, shortcut) => {
+    const current = store.get('settings.globalShortcut');
+    if (shortcut === current) return false;
+    return globalShortcut.isRegistered(shortcut);
+});
+
 
 // Window controls
 ipcMain.on('open-quick-note', (event, noteId) => {
@@ -182,6 +347,10 @@ ipcMain.on('close-window', (event) => {
     if (window) {
         window.close();
     }
+});
+
+ipcMain.on('open-external', (event, url) => {
+    shell.openExternal(url);
 });
 
 ipcMain.on('minimize-window', (event) => {
@@ -271,7 +440,7 @@ ipcMain.handle('delete-note', (event, noteId) => {
     // Delete associated images
     if (noteToDelete && noteToDelete.images) {
         noteToDelete.images.forEach(imagePath => {
-            const fullPath = path.join(imagesPath, path.basename(imagePath));
+            const fullPath = path.join(currentImagesPath, path.basename(imagePath));
             if (fs.existsSync(fullPath)) {
                 fs.unlinkSync(fullPath);
             }
@@ -309,7 +478,7 @@ ipcMain.handle('toggle-pin', (event, noteId) => {
 // Image handling
 ipcMain.handle('save-image', async (event, imageBuffer, extension = 'png') => {
     const fileName = `${uuidv4()}.${extension}`;
-    const filePath = path.join(imagesPath, fileName);
+    const filePath = path.join(currentImagesPath, fileName);
 
     // Convert array buffer to Buffer
     const buffer = Buffer.from(imageBuffer);
@@ -319,7 +488,7 @@ ipcMain.handle('save-image', async (event, imageBuffer, extension = 'png') => {
 });
 
 ipcMain.handle('get-image-path', (event, fileName) => {
-    return path.join(imagesPath, fileName);
+    return path.join(currentImagesPath, fileName);
 });
 
 // Search notes

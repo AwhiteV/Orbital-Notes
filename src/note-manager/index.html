@@ -11,7 +11,7 @@
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet" />
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries,typography"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         tailwind.config = {
@@ -118,6 +118,33 @@
             max-width: 100%;
             border-radius: 8px;
             margin: 0.5em 0;
+        }
+
+        .prose h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .prose h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .prose h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .prose p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
         }
 
         /* Delete confirmation modal */
@@ -244,39 +271,71 @@
                         <div id="lastEdited" class="text-xs text-slate-500 dark:text-slate-400 font-medium">Last edited
                             --</div>
                         <div class="flex items-center gap-1">
-                            <button id="btnPinNote"
-                                class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
-                                title="Pin Note">
-                                <span class="material-symbols-outlined text-[20px]">keep</span>
-                            </button>
-                            <button id="btnCopyNote"
-                                class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
-                                title="Copy to Clipboard">
-                                <span class="material-symbols-outlined text-[20px]">content_copy</span>
-                            </button>
-                            <button id="btnEditNote"
-                                class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
-                                title="Edit Note">
-                                <span class="material-symbols-outlined text-[20px]">edit</span>
-                            </button>
-                            <button id="btnDeleteNote"
-                                class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
-                                title="Delete Note">
-                                <span class="material-symbols-outlined text-[20px]">delete</span>
-                            </button>
+                            <!-- View mode buttons -->
+                            <div id="viewModeButtons" class="flex items-center gap-1">
+                                <button id="btnPinNote"
+                                    class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
+                                    title="Pin Note">
+                                    <span class="material-symbols-outlined text-[20px]">keep</span>
+                                </button>
+                                <button id="btnCopyNote"
+                                    class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
+                                    title="Copy to Clipboard">
+                                    <span class="material-symbols-outlined text-[20px]">content_copy</span>
+                                </button>
+                                <button id="btnEditNote"
+                                    class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
+                                    title="Edit Note">
+                                    <span class="material-symbols-outlined text-[20px]">edit</span>
+                                </button>
+                                <button id="btnDeleteNote"
+                                    class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
+                                    title="Delete Note">
+                                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                                </button>
+                            </div>
+                            <!-- Edit mode buttons -->
+                            <div id="editModeButtons" class="hidden flex items-center gap-2">
+                                <button id="btnCancelEdit"
+                                    class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
+                                    Cancel
+                                </button>
+                                <button id="btnSaveNote"
+                                    class="px-4 py-1.5 text-xs font-bold bg-primary text-white rounded-lg shadow-lg shadow-primary/20 hover:opacity-90 transition-all">
+                                    Save Changes
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Content Area -->
-                    <div class="flex-1 overflow-y-auto p-8">
-                        <h1 id="noteTitle" class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Note Title
-                        </h1>
-                        <div id="noteTags" class="flex gap-2 mb-4">
-                            <!-- Tags will be rendered here -->
+                    <div class="flex-1 overflow-y-auto p-8 flex flex-col">
+                        <!-- Preview Mode -->
+                        <div id="viewArea">
+                            <h1 id="noteTitle" class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Note Title
+                            </h1>
+                            <div id="noteTags" class="flex gap-2 mb-4">
+                                <!-- Tags will be rendered here -->
+                            </div>
+                            <div id="noteContent"
+                                class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300">
+                                <!-- Content will be rendered here -->
+                            </div>
                         </div>
-                        <div id="noteContent"
-                            class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300">
-                            <!-- Content will be rendered here -->
+
+                        <!-- Edit Mode -->
+                        <div id="editArea" class="hidden h-full flex flex-col space-y-4">
+                            <input id="editTitle" type="text"
+                                class="w-full text-2xl font-bold bg-transparent border-0 border-b-2 border-slate-200 dark:border-slate-800 focus:border-primary dark:focus:border-primary focus:ring-0 px-0 py-2 text-slate-900 dark:text-white transition-colors"
+                                placeholder="Note Title">
+
+                            <input id="editTags" type="text"
+                                class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-lg px-3 py-2 text-sm text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-primary focus:outline-none transition-shadow"
+                                placeholder="Tags (comma separated)">
+
+                            <textarea id="editContent"
+                                class="flex-1 w-full bg-transparent border-0 focus:ring-0 p-0 text-slate-600 dark:text-slate-300 resize-none min-h-[300px]"
+                                placeholder="Start writing..."></textarea>
                         </div>
                     </div>
 
@@ -290,6 +349,83 @@
                         <div id="wordCount">0 words</div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal-content dark:bg-surface-dark w-[500px] max-w-[90%] flex flex-col h-[500px]">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Settings</h3>
+                <button id="btnCloseSettings" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex border-b border-slate-200 dark:border-slate-700 mb-4">
+                <button
+                    class="settings-tab active px-4 py-2 text-sm font-medium text-primary border-b-2 border-primary transition-colors"
+                    data-tab="general">General</button>
+                <button
+                    class="settings-tab px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                    data-tab="shortcuts">Shortcuts</button>
+                <button
+                    class="settings-tab px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                    data-tab="tags">Tags</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-1">
+                <!-- General Tab -->
+                <div id="tabGeneral" class="tab-content space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Data Storage
+                            Path</label>
+                        <div class="flex gap-2">
+                            <input id="dataPathInput" readonly type="text"
+                                class="flex-1 rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 px-3 py-2">
+                            <button id="btnBrowsePath"
+                                class="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Browse</button>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">Requires restart to apply changes.</p>
+                    </div>
+                </div>
+
+                <!-- Shortcuts Tab -->
+                <div id="tabShortcuts" class="tab-content hidden space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Toggle Floating
+                            Ball</label>
+                        <input id="shortcutInput" type="text" placeholder="Click to record (e.g. Alt+1)"
+                            class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent px-3 py-2">
+                        <p class="text-xs text-slate-400 mt-1">Default: Alt+1</p>
+                    </div>
+                </div>
+
+                <!-- Tags Tab -->
+                <div id="tabTags" class="tab-content hidden space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Existing
+                            Tags</label>
+                        <div id="settingsTagList" class="flex flex-wrap gap-2">
+                            <!-- Tags will be rendered here -->
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2">Click X to delete a tag from the system (removes from
+                            filter list only).</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
+                <button id="btnCancelSettings"
+                    class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
+                <button id="btnSaveSettings"
+                    class="px-4 py-2 rounded-lg bg-primary text-white hover:opacity-90 transition-opacity">Save
+                    Changes</button>
             </div>
         </div>
     </div>
@@ -324,10 +460,26 @@
         const searchInput = document.getElementById('searchInput');
         const filterChips = document.getElementById('filterChips');
         const deleteModal = document.getElementById('deleteModal');
+        const viewArea = document.getElementById('viewArea');
+        const editArea = document.getElementById('editArea');
+        const viewModeButtons = document.getElementById('viewModeButtons');
+        const editModeButtons = document.getElementById('editModeButtons');
+
+        let isEditMode = false;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
+            // Handle external links
+            document.addEventListener('click', (e) => {
+                const link = e.target.closest('a');
+                if (link && link.href.startsWith('http')) {
+                    e.preventDefault();
+                    window.noteAPI?.openExternal(link.href);
+                }
+            });
+
             await loadNotes();
+
 
             // Listen for updates
             if (window.noteAPI) {
@@ -493,6 +645,7 @@
 
         // Show note detail
         function showNoteDetail(note) {
+            exitEditMode(); // Always start in view mode
             emptyState.classList.add('hidden');
             noteDetail.classList.remove('hidden');
 
@@ -530,10 +683,65 @@
 
         // Edit note button
         document.getElementById('btnEditNote').addEventListener('click', () => {
-            if (selectedNoteId && window.noteAPI) {
-                window.noteAPI.openQuickNote(selectedNoteId);
+            const note = notes.find(n => n.id === selectedNoteId);
+            if (note) {
+                enterEditMode(note);
             }
         });
+
+        // Cancel edit button
+        document.getElementById('btnCancelEdit').addEventListener('click', () => {
+            exitEditMode();
+        });
+
+        // Save note button
+        document.getElementById('btnSaveNote').addEventListener('click', async () => {
+            if (!selectedNoteId || !window.noteAPI) return;
+
+            const title = document.getElementById('editTitle').value.trim() || 'Untitled';
+            const tagsText = document.getElementById('editTags').value.trim();
+            const tags = tagsText ? tagsText.split(',').map(t => t.trim()).filter(t => t) : [];
+            const content = document.getElementById('editContent').value;
+
+            const updatedNote = await window.noteAPI.updateNote(selectedNoteId, {
+                title,
+                tags,
+                content
+            });
+
+            if (updatedNote) {
+                // The notes-updated listener will handle the list refresh
+                // But we should update our local view immediately for better UX
+                const index = notes.findIndex(n => n.id === selectedNoteId);
+                if (index !== -1) notes[index] = updatedNote;
+
+                exitEditMode();
+                showNoteDetail(updatedNote);
+            }
+        });
+
+        function enterEditMode(note) {
+            isEditMode = true;
+            viewArea.classList.add('hidden');
+            editArea.classList.remove('hidden');
+            viewModeButtons.classList.add('hidden');
+            editModeButtons.classList.remove('hidden');
+
+            document.getElementById('editTitle').value = note.title;
+            document.getElementById('editTags').value = note.tags.join(', ');
+            document.getElementById('editContent').value = note.content;
+
+            // Focus content
+            document.getElementById('editContent').focus();
+        }
+
+        function exitEditMode() {
+            isEditMode = false;
+            viewArea.classList.remove('hidden');
+            editArea.classList.add('hidden');
+            viewModeButtons.classList.remove('hidden');
+            editModeButtons.classList.add('hidden');
+        }
 
         // Copy note button
         document.getElementById('btnCopyNote').addEventListener('click', async () => {
@@ -614,6 +822,144 @@
             const englishWords = (text.match(/[a-zA-Z]+/g) || []).length;
             return chineseChars + englishWords;
         }
+
+        // ================= Settings Logic =================
+        const settingsModal = document.getElementById('settingsModal');
+        const btnSettings = document.getElementById('btnSettings');
+        const btnCloseSettings = document.getElementById('btnCloseSettings');
+        const btnCancelSettings = document.getElementById('btnCancelSettings');
+        const btnSaveSettings = document.getElementById('btnSaveSettings');
+        const settingsTabs = document.querySelectorAll('.settings-tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        let currentSettings = { dataPath: '', globalShortcut: '' };
+
+        // Open Settings
+        if (btnSettings) {
+            btnSettings.addEventListener('click', async () => {
+                await loadSettings();
+                settingsModal.classList.add('show');
+            });
+        }
+
+        // Close Settings
+        function closeSettings() {
+            settingsModal.classList.remove('show');
+        }
+        [btnCloseSettings, btnCancelSettings].forEach(btn => btn?.addEventListener('click', closeSettings));
+
+        // Close on overlay click
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) closeSettings();
+        });
+
+        // Tab Switching
+        settingsTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Update tabs
+                settingsTabs.forEach(t => {
+                    t.classList.remove('active', 'text-primary', 'border-b-2', 'border-primary');
+                    t.classList.add('text-slate-500', 'dark:text-slate-400');
+                });
+                tab.classList.add('active', 'text-primary', 'border-b-2', 'border-primary');
+                tab.classList.remove('text-slate-500', 'dark:text-slate-400');
+
+                // Update content
+                const tabId = tab.dataset.tab;
+                tabContents.forEach(content => content.classList.add('hidden'));
+                document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.remove('hidden');
+            });
+        });
+
+        // Load Settings
+        async function loadSettings() {
+            if (!window.noteAPI) return;
+            const settings = await window.noteAPI.getSettings();
+            currentSettings = settings;
+
+            // Populate General
+            document.getElementById('dataPathInput').value = settings.dataPath;
+
+            // Populate Shortcuts
+            document.getElementById('shortcutInput').value = settings.globalShortcut || 'Alt+1';
+
+            // Populate Tags
+            renderSettingsTags();
+        }
+
+        function renderSettingsTags() {
+            const list = document.getElementById('settingsTagList');
+            if (!allTags || allTags.length === 0) {
+                list.innerHTML = '<span class="text-sm text-slate-400">No tags found.</span>';
+                return;
+            }
+            list.innerHTML = allTags.map(tag => `
+                <div class="flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-xs text-slate-600 dark:text-slate-300">
+                    <span>#${tag}</span>
+                </div>
+            `).join('');
+        }
+
+        // Browse Path
+        document.getElementById('btnBrowsePath').addEventListener('click', async () => {
+            if (!window.noteAPI) return;
+            const path = await window.noteAPI.selectDirectory();
+            if (path) {
+                document.getElementById('dataPathInput').value = path;
+            }
+        });
+
+        // Record Shortcut
+        const shortcutInput = document.getElementById('shortcutInput');
+        shortcutInput.addEventListener('keydown', (e) => {
+            e.preventDefault();
+            const keys = [];
+            if (e.ctrlKey) keys.push('Ctrl');
+            if (e.metaKey) keys.push('Super');
+            if (e.altKey) keys.push('Alt');
+            if (e.shiftKey) keys.push('Shift');
+
+            let key = e.key;
+            if (key === 'Control' || key === 'Alt' || key === 'Shift' || key === 'Meta') return;
+
+            if (key.match(/^[0-9]$/)) key = key;
+            else if (key.length === 1) key = key.toUpperCase();
+
+            keys.push(key);
+            const shortcut = keys.join('+');
+            shortcutInput.value = shortcut;
+        });
+
+        // Save Settings
+        btnSaveSettings.addEventListener('click', async () => {
+            if (!window.noteAPI) return;
+
+            const newPath = document.getElementById('dataPathInput').value;
+            const newShortcut = document.getElementById('shortcutInput').value;
+
+            // Check Conflict
+            if (newShortcut !== currentSettings.globalShortcut) {
+                const conflict = await window.noteAPI.checkShortcutConflict(newShortcut);
+                if (conflict) {
+                    if (!confirm(`Shortcut ${newShortcut} is currently in use or invalid. Do you want to continue?`)) {
+                        return;
+                    }
+                }
+            }
+
+            const newSettings = {
+                dataPath: newPath,
+                globalShortcut: newShortcut
+            };
+
+            const result = await window.noteAPI.saveSettings(newSettings);
+            if (result.restartRequired) {
+                alert('Data path updated. Creating new data structure if needed. Previous data was NOT moved automatically.');
+                await loadNotes(); // Reload notes from new path
+            }
+
+            closeSettings();
+        });
     </script>
 </body>
 

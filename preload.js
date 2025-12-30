@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('noteAPI', {
     minimizeWindow: () => ipcRenderer.send('minimize-window'),
     moveFloatingBall: (x, y) => ipcRenderer.send('move-floating-ball', { x, y }),
     getFloatingBallPosition: () => ipcRenderer.invoke('get-floating-ball-position'),
+    openExternal: (url) => ipcRenderer.send('open-external', url),
 
     // Notes CRUD
     getNotes: () => ipcRenderer.invoke('get-notes'),
@@ -26,6 +27,12 @@ contextBridge.exposeInMainWorld('noteAPI', {
     // Image handling
     saveImage: (imageBuffer, extension) => ipcRenderer.invoke('save-image', imageBuffer, extension),
     getImagePath: (fileName) => ipcRenderer.invoke('get-image-path', fileName),
+
+    // Settings
+    getSettings: () => ipcRenderer.invoke('get-settings'),
+    saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
+    selectDirectory: () => ipcRenderer.invoke('select-directory'),
+    checkShortcutConflict: (shortcut) => ipcRenderer.invoke('check-shortcut-conflict', shortcut),
 
     // Event listeners
     onNotesUpdated: (callback) => {
