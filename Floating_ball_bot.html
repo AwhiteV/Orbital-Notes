@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>悬浮拖拽小机器人 SVG</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f3f4f6;
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* 悬浮动画：上下轻轻浮动 */
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        /* 天线摆动动画 */
+        @keyframes bobble {
+
+            0%,
+            100% {
+                transform: rotate(-5deg);
+            }
+
+            50% {
+                transform: rotate(5deg);
+            }
+        }
+
+        /* 眨眼动画 */
+        @keyframes blink {
+
+            0%,
+            96%,
+            100% {
+                transform: scaleY(1);
+            }
+
+            98% {
+                transform: scaleY(0.1);
+            }
+        }
+
+        #robot-container {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            cursor: grab;
+            /* 初始位置 */
+            top: calc(50% - 60px);
+            left: calc(50% - 60px);
+            user-select: none;
+            touch-action: none;
+            /* 防止移动端滚动 */
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.1));
+            transition: transform 0.1s;
+        }
+
+        #robot-container:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+            /* 点击时轻微缩小反馈 */
+        }
+
+        /* 只有在不拖拽的时候才应用浮动动画，避免冲突 */
+        #robot-container.floating .robot-body {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .antenna-group {
+            transform-origin: 100px 35px;
+            animation: bobble 2s ease-in-out infinite;
+        }
+
+        .robot-eyes {
+            transform-origin: center;
+            animation: blink 4s infinite;
+        }
+
+        .instructions {
+            position: fixed;
+            bottom: 20px;
+            color: #6b7280;
+            font-size: 0.875rem;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="instructions">尝试用鼠标或手指拖拽小机器人</div>
+
+    <!-- 
+      === SVG 代码开始 === 
+      如果您需要在 Windows 开发中使用，请复制下面的 <svg> 标签内容 
+    -->
+    <div id="robot-container" class="floating">
+        <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+            <defs>
+                <!-- 主体渐变：营造球体感 -->
+                <radialGradient id="bodyGradient" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
+                    gradientTransform="translate(70 70) rotate(51.3402) scale(166.433)">
+                    <stop stop-color="#EBE3D3" /> <!-- 高光区更亮 -->
+                    <stop offset="0.46" stop-color="#D0BB95" /> <!-- 主题色 -->
+                    <stop offset="1" stop-color="#9C8865" /> <!-- 阴影区 -->
+                </radialGradient>
+
+                <!-- 屏幕/面部渐变 -->
+                <linearGradient id="faceGradient" x1="100" y1="65" x2="100" y2="135" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#4A4238" />
+                    <stop offset="1" stop-color="#2D2822" />
+                </linearGradient>
+
+                <!-- 眼睛发光效果 -->
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="1.5" result="coloredBlur" />
+                    <feMerge>
+                        <feMergeNode in="coloredBlur" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
+
+            <!-- 机器人主体组 -->
+            <g class="robot-body">
+
+                <!-- 天线 -->
+                <g class="antenna-group">
+                    <line x1="100" y1="40" x2="100" y2="20" stroke="#9C8865" stroke-width="4" stroke-linecap="round" />
+                    <circle cx="100" cy="18" r="6" fill="#D0BB95" stroke="#9C8865" stroke-width="2" />
+                    <!-- 天线信号灯 -->
+                    <circle cx="100" cy="18" r="2" fill="#86EFAC">
+                        <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" />
+                    </circle>
+                </g>
+
+                <!-- 耳朵/手 (两侧的小突起) -->
+                <circle cx="25" cy="100" r="15" fill="#9C8865" />
+                <circle cx="175" cy="100" r="15" fill="#9C8865" />
+
+                <!-- 身体主球 -->
+                <circle cx="100" cy="100" r="80" fill="url(#bodyGradient)" />
+
+                <!-- 内部高光 (反光) -->
+                <ellipse cx="100" cy="100" rx="75" ry="75" fill="white" fill-opacity="0.05" />
+                <path d="M60 50 Q100 30 140 50" stroke="white" stroke-width="3" stroke-linecap="round"
+                    stroke-opacity="0.3" fill="none" />
+
+                <!-- 面部屏幕区域 -->
+                <rect x="50" y="75" width="100" height="60" rx="25" fill="url(#faceGradient)" stroke="#9C8865"
+                    stroke-width="2" />
+
+                <!-- 眼睛 -->
+                <g class="robot-eyes">
+                    <circle cx="80" cy="105" r="8" fill="#86EFAC" filter="url(#glow)" />
+                    <circle cx="120" cy="105" r="8" fill="#86EFAC" filter="url(#glow)" />
+                    <!-- 眼神高光 -->
+                    <circle cx="83" cy="102" r="2.5" fill="white" />
+                    <circle cx="123" cy="102" r="2.5" fill="white" />
+                </g>
+
+                <!-- 腮红 -->
+                <ellipse cx="65" cy="115" rx="5" ry="3" fill="#FF8ba7" fill-opacity="0.6" />
+                <ellipse cx="135" cy="115" rx="5" ry="3" fill="#FF8ba7" fill-opacity="0.6" />
+
+                <!-- 小嘴巴 (可选，用简单的线条表示) -->
+                <path d="M95 112 Q100 115 105 112" stroke="#86EFAC" stroke-width="2" stroke-linecap="round"
+                    stroke-opacity="0.5" fill="none" />
+
+            </g>
+        </svg>
+    </div>
+    <!-- === SVG 代码结束 === -->
+
+    <script>
+        const robot = document.getElementById('robot-container');
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+
+        // 鼠标按下事件
+        const onMouseDown = (e) => {
+            isDragging = true;
+            robot.classList.remove('floating'); // 拖拽时暂停浮动动画
+
+            // 获取鼠标/触摸点相对于视口的坐标
+            const clientX = e.clientX || e.touches[0].clientX;
+            const clientY = e.clientY || e.touches[0].clientY;
+
+            startX = clientX;
+            startY = clientY;
+
+            // 获取元素当前的 top/left 值
+            const rect = robot.getBoundingClientRect();
+            initialLeft = rect.left;
+            initialTop = rect.top;
+
+            // 阻止默认拖拽行为（如选中文本）
+            if (e.type === 'mousedown') e.preventDefault();
+        };
+
+        // 鼠标移动事件
+        const onMouseMove = (e) => {
+            if (!isDragging) return;
+
+            const clientX = e.clientX || e.touches[0].clientX;
+            const clientY = e.clientY || e.touches[0].clientY;
+
+            const dx = clientX - startX;
+            const dy = clientY - startY;
+
+            // 计算新位置
+            let newLeft = initialLeft + dx;
+            let newTop = initialTop + dy;
+
+            // 简单的边界检查 (防止拖出屏幕太远)
+            const maxLeft = window.innerWidth - robot.offsetWidth;
+            const maxTop = window.innerHeight - robot.offsetHeight;
+
+            // 这里的边界限制比较宽松，允许部分拖出去
+            robot.style.left = `${newLeft}px`;
+            robot.style.top = `${newTop}px`;
+        };
+
+        // 鼠标松开事件
+        const onMouseUp = () => {
+            if (isDragging) {
+                isDragging = false;
+                robot.classList.add('floating'); // 恢复浮动动画
+            }
+        };
+
+        // 绑定事件 (兼容 PC 和 移动端)
+        robot.addEventListener('mousedown', onMouseDown);
+        robot.addEventListener('touchstart', onMouseDown, { passive: false });
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('touchmove', onMouseMove, { passive: false });
+
+        window.addEventListener('mouseup', onMouseUp);
+        window.addEventListener('touchend', onMouseUp);
+
+        // 窗口大小改变时重置（可选优化）
+        window.addEventListener('resize', () => {
+            // 简单的逻辑：如果在屏幕外，拉回来
+            const rect = robot.getBoundingClientRect();
+            if (rect.left > window.innerWidth) robot.style.left = (window.innerWidth - 150) + 'px';
+            if (rect.top > window.innerHeight) robot.style.top = (window.innerHeight - 150) + 'px';
+        });
+
+    </script>
+</body>
+
+</html>

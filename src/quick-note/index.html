@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html class="" lang="zh-CN">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Quick Note</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&display=swap"
+        rel="stylesheet" />
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Marked.js for Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#D0BB95",
+                        "background-light": "#f7f7f6",
+                        "background-dark": "#1d1a15"
+                    },
+                    fontFamily: {
+                        display: "Plus Jakarta Sans"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #2c3b55;
+            border-radius: 20px;
+        }
+
+        /* Markdown preview styles */
+        .markdown-preview h1 {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 0.5em;
+        }
+
+        .markdown-preview h2 {
+            font-size: 1.25em;
+            font-weight: bold;
+            margin-bottom: 0.5em;
+        }
+
+        .markdown-preview h3 {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 0.5em;
+        }
+
+        .markdown-preview ul {
+            list-style-type: disc;
+            padding-left: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        .markdown-preview ol {
+            list-style-type: decimal;
+            padding-left: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        .markdown-preview blockquote {
+            border-left: 4px solid #D0BB95;
+            padding-left: 1em;
+            color: #92a4c9;
+            margin-bottom: 0.5em;
+        }
+
+        .markdown-preview code {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .markdown-preview pre {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 1em;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 0.5em;
+        }
+
+        .markdown-preview pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .markdown-preview a {
+            color: #D0BB95;
+            text-decoration: underline;
+        }
+
+        .markdown-preview img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 0.5em 0;
+        }
+
+        .markdown-preview p {
+            margin-bottom: 0.5em;
+        }
+
+        /* Drag handle */
+        .drag-handle {
+            -webkit-app-region: drag;
+        }
+
+        .drag-handle button {
+            -webkit-app-region: no-drag;
+        }
+
+        /* Color picker */
+        .color-picker {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: white;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+        }
+
+        .color-picker.show {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            width: 120px;
+        }
+
+        .color-option {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.1s;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        /* Font size picker */
+        .size-picker {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: white;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+        }
+
+        .size-picker.show {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .size-option {
+            padding: 4px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.1s;
+        }
+
+        .size-option:hover {
+            background: #f0f0f0;
+        }
+
+        /* Placeholder for contenteditable */
+        [contenteditable][data-placeholder]:empty:before {
+            content: attr(data-placeholder);
+            color: #9ca3af;
+            cursor: text;
+        }
+
+        /* Make contenteditable look clean */
+        [contenteditable] {
+            -webkit-user-modify: read-write-plaintext-only;
+            -webkit-app-region: no-drag;
+            cursor: text;
+        }
+
+        /* Title input focus state */
+        #windowTitle:focus {
+            outline: none;
+            border-bottom: 2px solid #D0BB95;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Ensure title can receive clicks/double-clicks by disabling drag on the text itself */
+        #windowTitle {
+            -webkit-app-region: no-drag;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display flex items-center justify-center min-h-screen p-0 overflow-hidden">
+
+    <!-- Main Window Container -->
+    <div
+        class="relative w-full h-screen bg-white dark:bg-[#111722] flex flex-col overflow-hidden transition-all duration-300">
+
+        <!-- Header -->
+        <header
+            class="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-100 dark:border-[#232f48] px-5 py-3 bg-white/50 dark:bg-[#111722]/50 backdrop-blur-sm sticky top-0 z-10 select-none drag-handle">
+            <div class="flex items-center gap-3 text-gray-900 dark:text-white overflow-hidden">
+                <div class="size-6 text-primary flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined text-[24px]">edit_note</span>
+                </div>
+                <h2 id="windowTitle"
+                    class="text-base font-bold leading-tight tracking-tight truncate px-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-text"
+                    title="Double click to rename">Quick Note</h2>
+                <span id="saveStatus" class="text-xs text-gray-400 dark:text-gray-500 font-medium ml-2 flex-shrink-0">*
+                    Unsaved</span>
+            </div>
+            <div class="flex gap-1 flex-shrink-0">
+                <button id="btnPin"
+                    class="flex items-center justify-center size-8 rounded-lg hover:bg-gray-100 dark:hover:bg-[#232f48] text-gray-500 dark:text-gray-400 transition-colors"
+                    title="Pin to top">
+                    <span class="material-symbols-outlined text-[18px]">push_pin</span>
+                </button>
+                <button id="btnMinimize"
+                    class="flex items-center justify-center size-8 rounded-lg hover:bg-gray-100 dark:hover:bg-[#232f48] text-gray-500 dark:text-gray-400 transition-colors"
+                    title="Minimize">
+                    <span class="material-symbols-outlined text-[18px]">remove</span>
+                </button>
+                <button id="btnClose"
+                    class="flex items-center justify-center size-8 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
+                    title="Close">
+                    <span class="material-symbols-outlined text-[18px]">close</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="flex flex-col flex-1 overflow-hidden">
+            <!-- Editor Area -->
+            <textarea id="noteContent" autofocus
+                class="flex-1 custom-scrollbar overflow-y-auto resize-none bg-transparent border-none focus:ring-0 p-5 text-base text-gray-800 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-[#5f6e8c] font-normal leading-relaxed"
+                placeholder="Type something, paste an image, or drop a link..."></textarea>
+
+            <!-- Preview Area (hidden by default) -->
+            <div id="previewArea"
+                class="hidden flex-1 custom-scrollbar overflow-y-auto p-5 text-base text-gray-800 dark:text-gray-200 leading-relaxed markdown-preview">
+            </div>
+
+            <!-- Toolbar & Chips Container -->
+            <div class="flex flex-col border-t border-gray-100 dark:border-[#232f48] bg-white dark:bg-[#111722]">
+                <!-- Chips / Tags -->
+                <div id="tagsContainer" class="px-5 pt-3 flex gap-2 overflow-x-auto no-scrollbar">
+                    <button id="addTagBtn"
+                        class="flex h-7 items-center justify-center gap-x-1.5 rounded-full bg-transparent border border-dashed border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary pl-3 pr-3 transition-colors cursor-pointer">
+                        <span class="material-symbols-outlined text-[16px] text-gray-400 dark:text-gray-500">add</span>
+                        <span class="text-gray-500 dark:text-gray-400 text-xs font-medium">Tag</span>
+                    </button>
+                </div>
+
+                <!-- Action Toolbar -->
+                <div class="flex justify-between items-center px-4 py-3 gap-4">
+                    <div class="flex items-center gap-1">
+                        <!-- Formatting Tools -->
+                        <div class="flex bg-gray-50 dark:bg-[#1a2333] rounded-lg p-1">
+                            <button id="btnBold"
+                                class="p-1.5 rounded hover:bg-white dark:hover:bg-[#2a364d] text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:shadow-sm transition-all"
+                                title="Bold (**text**)">
+                                <span class="material-symbols-outlined text-[20px]">format_bold</span>
+                            </button>
+                            <button id="btnItalic"
+                                class="p-1.5 rounded hover:bg-white dark:hover:bg-[#2a364d] text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:shadow-sm transition-all"
+                                title="Italic (*text*)">
+                                <span class="material-symbols-outlined text-[20px]">format_italic</span>
+                            </button>
+                            <button id="btnList"
+                                class="p-1.5 rounded hover:bg-white dark:hover:bg-[#2a364d] text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:shadow-sm transition-all"
+                                title="List (- item)">
+                                <span class="material-symbols-outlined text-[20px]">format_list_bulleted</span>
+                            </button>
+                            <div class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1 self-center"></div>
+                            <div class="relative">
+                                <button id="btnColor"
+                                    class="p-1.5 rounded hover:bg-white dark:hover:bg-[#2a364d] text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:shadow-sm transition-all"
+                                    title="Color">
+                                    <span class="material-symbols-outlined text-[20px]">palette</span>
+                                </button>
+                                <div id="colorPicker" class="color-picker">
+                                    <div class="color-option" style="background:#ef4444" data-color="#ef4444"></div>
+                                    <div class="color-option" style="background:#f97316" data-color="#f97316"></div>
+                                    <div class="color-option" style="background:#eab308" data-color="#eab308"></div>
+                                    <div class="color-option" style="background:#22c55e" data-color="#22c55e"></div>
+                                    <div class="color-option" style="background:#3b82f6" data-color="#3b82f6"></div>
+                                    <div class="color-option" style="background:#8b5cf6" data-color="#8b5cf6"></div>
+                                    <div class="color-option" style="background:#ec4899" data-color="#ec4899"></div>
+                                    <div class="color-option" style="background:#6b7280" data-color="#6b7280"></div>
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <button id="btnSize"
+                                    class="p-1.5 rounded hover:bg-white dark:hover:bg-[#2a364d] text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:shadow-sm transition-all"
+                                    title="Text Size">
+                                    <span class="material-symbols-outlined text-[20px]">format_size</span>
+                                </button>
+                                <div id="sizePicker" class="size-picker">
+                                    <div class="size-option text-xs" data-size="small">Small</div>
+                                    <div class="size-option text-base" data-size="normal">Normal</div>
+                                    <div class="size-option text-lg" data-size="large">Large</div>
+                                    <div class="size-option text-xl" data-size="xlarge">X-Large</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview Toggle Button -->
+                        <button id="btnPreview"
+                            class="p-2 ml-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#232f48] transition-colors"
+                            title="Toggle Preview">
+                            <span class="material-symbols-outlined text-[20px]">visibility</span>
+                        </button>
+                    </div>
+
+                    <!-- Primary Actions -->
+                    <div class="flex gap-2">
+                        <button id="btnCopy"
+                            class="flex items-center justify-center size-9 rounded-lg bg-gray-100 dark:bg-[#232f48] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#2c3b55] transition-colors"
+                            title="Copy to Clipboard">
+                            <span class="material-symbols-outlined text-[20px]">content_copy</span>
+                        </button>
+                        <button id="btnSave"
+                            class="flex items-center justify-center rounded-lg h-9 px-4 bg-primary hover:opacity-90 text-white gap-2 text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95">
+                            <span class="material-symbols-outlined text-[20px]">save</span>
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let currentNoteId = null;
+        let tags = [];
+        let images = [];
+        let hasUnsavedChanges = false;
+        let isPreviewMode = false;
+
+        // DOM Elements
+        const noteContent = document.getElementById('noteContent');
+        const previewArea = document.getElementById('previewArea');
+        const saveStatus = document.getElementById('saveStatus');
+        const tagsContainer = document.getElementById('tagsContainer');
+        const colorPicker = document.getElementById('colorPicker');
+        const sizePicker = document.getElementById('sizePicker');
+        const windowTitle = document.getElementById('windowTitle');
+
+        // Title Editing Logic
+        let isTitleEditing = false;
+
+        // Double click to start editing
+        windowTitle.addEventListener('dblclick', (e) => {
+            isTitleEditing = true;
+            windowTitle.contentEditable = true;
+            windowTitle.focus();
+
+            // Select all text
+            const range = document.createRange();
+            range.selectNodeContents(windowTitle);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        });
+
+        // Function to finish editing title
+        const finishTitleEdit = () => {
+            if (!isTitleEditing) return;
+
+            isTitleEditing = false;
+            windowTitle.contentEditable = false;
+            windowTitle.scrollLeft = 0; // Reset scroll if overflowed
+
+            const newTitle = windowTitle.textContent.trim();
+            // If empty, reset to default
+            if (!newTitle) {
+                windowTitle.textContent = 'Quick Note';
+            }
+
+            markUnsaved(); // Title change counts as change
+        };
+
+        // Finish editing on blur or Enter
+        windowTitle.addEventListener('blur', finishTitleEdit);
+        windowTitle.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                finishTitleEdit();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Listen for note loading
+            if (window.noteAPI) {
+                window.noteAPI.onLoadNote(async (noteId) => {
+                    await loadNote(noteId);
+                });
+            }
+        });
+
+        // Toggle preview mode
+        function togglePreview() {
+            isPreviewMode = !isPreviewMode;
+
+            if (isPreviewMode) {
+                // Show preview
+                const markdown = noteContent.value;
+                previewArea.innerHTML = marked.parse(markdown || '');
+                noteContent.classList.add('hidden');
+                previewArea.classList.remove('hidden');
+
+                // Update button icon
+                const btn = document.getElementById('btnPreview');
+                btn.querySelector('span').textContent = 'edit';
+                btn.title = 'Edit Mode';
+            } else {
+                // Show editor
+                noteContent.classList.remove('hidden');
+                previewArea.classList.add('hidden');
+                noteContent.focus();
+
+                // Update button icon
+                const btn = document.getElementById('btnPreview');
+                btn.querySelector('span').textContent = 'visibility';
+                btn.title = 'Preview Mode';
+            }
+        }
+
+        // Preview button click
+        document.getElementById('btnPreview').addEventListener('click', togglePreview);
+
+        // Listen for input (track changes only)
+        noteContent.addEventListener('input', () => {
+            markUnsaved();
+        });
+
+        // Load existing note
+        async function loadNote(noteId) {
+            if (!window.noteAPI) return;
+
+            const note = await window.noteAPI.getNote(noteId);
+            if (note) {
+                currentNoteId = note.id;
+                noteContent.value = note.content || '';
+
+                // Update title
+                windowTitle.textContent = note.title || 'Quick Note';
+
+                tags = note.tags || [];
+                images = note.images || [];
+                renderTags();
+                updateSaveStatus(false);
+            }
+        }
+
+        // Render tags
+        function renderTags() {
+            const existingTags = tagsContainer.querySelectorAll('.tag-chip');
+            existingTags.forEach(tag => tag.remove());
+
+            const addTagBtn = document.getElementById('addTagBtn');
+            tags.forEach((tag, index) => {
+                const tagBtn = document.createElement('button');
+                tagBtn.className = 'tag-chip group flex h-7 items-center justify-center gap-x-1.5 rounded-full bg-gray-100 dark:bg-[#232f48] hover:bg-gray-200 dark:hover:bg-[#2c3b55] pl-3 pr-3 transition-colors cursor-pointer border border-transparent dark:border-[#34425e]';
+                tagBtn.innerHTML = `
+                    <span class="text-gray-600 dark:text-gray-300 text-xs font-medium">#${tag}</span>
+                    <span class="material-symbols-outlined text-[14px] text-gray-400 opacity-0 group-hover:opacity-100 remove-tag" data-index="${index}">close</span>
+                `;
+                tagsContainer.insertBefore(tagBtn, addTagBtn);
+            });
+
+            document.querySelectorAll('.remove-tag').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const index = parseInt(e.target.dataset.index);
+                    tags.splice(index, 1);
+                    renderTags();
+                    markUnsaved();
+                });
+            });
+        }
+
+        // Add tag
+        document.getElementById('addTagBtn').addEventListener('click', () => {
+            const tagName = prompt('Enter tag name:');
+            if (tagName && tagName.trim()) {
+                const cleanTag = tagName.trim().toLowerCase().replace(/^#/, '');
+                if (!tags.includes(cleanTag)) {
+                    tags.push(cleanTag);
+                    renderTags();
+                    markUnsaved();
+                }
+            }
+        });
+
+        // Window controls
+        document.getElementById('btnClose').addEventListener('click', () => {
+            if (hasUnsavedChanges) {
+                if (confirm('You have unsaved changes. Discard them?')) {
+                    window.noteAPI?.closeWindow();
+                }
+            } else {
+                window.noteAPI?.closeWindow();
+            }
+        });
+
+        document.getElementById('btnMinimize').addEventListener('click', () => {
+            window.noteAPI?.minimizeWindow();
+        });
+
+        // Formatting buttons
+        document.getElementById('btnBold').addEventListener('click', () => {
+            wrapSelection('**', '**');
+        });
+
+        document.getElementById('btnItalic').addEventListener('click', () => {
+            wrapSelection('*', '*');
+        });
+
+        document.getElementById('btnList').addEventListener('click', () => {
+            insertAtLineStart('- ');
+        });
+
+        // Color picker
+        document.getElementById('btnColor').addEventListener('click', (e) => {
+            e.stopPropagation();
+            colorPicker.classList.toggle('show');
+            sizePicker.classList.remove('show');
+        });
+
+        colorPicker.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                const color = e.target.dataset.color;
+                wrapSelection(`<span style="color:${color}">`, '</span>');
+                colorPicker.classList.remove('show');
+            });
+        });
+
+        // Size picker
+        document.getElementById('btnSize').addEventListener('click', (e) => {
+            e.stopPropagation();
+            sizePicker.classList.toggle('show');
+            colorPicker.classList.remove('show');
+        });
+
+        sizePicker.querySelectorAll('.size-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                const size = e.target.dataset.size;
+                const sizeMap = {
+                    'small': '0.875em',
+                    'normal': '1em',
+                    'large': '1.25em',
+                    'xlarge': '1.5em'
+                };
+                wrapSelection(`<span style="font-size:${sizeMap[size]}">`, '</span>');
+                sizePicker.classList.remove('show');
+            });
+        });
+
+        // Close pickers when clicking outside
+        document.addEventListener('click', () => {
+            colorPicker.classList.remove('show');
+            sizePicker.classList.remove('show');
+        });
+
+        // Copy to clipboard
+        document.getElementById('btnCopy').addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(noteContent.value);
+                const btn = document.getElementById('btnCopy');
+                const icon = btn.querySelector('span');
+                icon.textContent = 'check';
+                setTimeout(() => {
+                    icon.textContent = 'content_copy';
+                }, 1000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+        });
+
+        // Save note
+        document.getElementById('btnSave').addEventListener('click', saveNote);
+
+        async function saveNote() {
+            if (!window.noteAPI) return;
+
+            const content = noteContent.value;
+
+            // Determine title
+            let title = windowTitle.textContent.trim();
+
+            // Should we auto-extract from content? 
+            // Only if title is default "Quick Note" AND we don't have a title already set/loaded (handling via DOM content check above implies we trust DOM)
+            // But wait, if user deletes title text and expects auto-extract? 
+            // My finishTitleEdit logic resets empty title to "Quick Note".
+
+            // If title is "Quick Note" and we have valid content, maybe we can try to find a better title?
+            if (title === 'Quick Note') {
+                const lines = content.split('\n');
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (trimmed) {
+                        // Extract first meaningful line
+                        const extractedTitle = trimmed.replace(/^#+\s*/, '').substring(0, 50);
+                        if (extractedTitle) {
+                            title = extractedTitle;
+                            // Update UI to reflect this auto-extraction
+                            windowTitle.textContent = title;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            const noteData = {
+                title,
+                content,
+                tags,
+                images
+            };
+
+            try {
+                if (currentNoteId) {
+                    await window.noteAPI.updateNote(currentNoteId, noteData);
+                } else {
+                    const newNote = await window.noteAPI.createNote(noteData);
+                    currentNoteId = newNote.id;
+                }
+                updateSaveStatus(false);
+
+                // Auto-switch to preview mode after saving
+                if (!isPreviewMode) {
+                    togglePreview();
+                }
+            } catch (err) {
+                console.error('Failed to save note:', err);
+                alert('Failed to save note');
+            }
+        }
+
+        // Paste handler for images
+        noteContent.addEventListener('paste', async (e) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const blob = item.getAsFile();
+                    if (!blob || !window.noteAPI) continue;
+
+                    try {
+                        const buffer = await blob.arrayBuffer();
+                        const extension = item.type.split('/')[1] || 'png';
+                        const fileName = await window.noteAPI.saveImage(Array.from(new Uint8Array(buffer)), extension);
+
+                        images.push(fileName);
+
+                        const imagePath = await window.noteAPI.getImagePath(fileName);
+                        insertText(`\n![image](file://${imagePath.replace(/\\/g, '/')})\n`);
+                        markUnsaved();
+                    } catch (err) {
+                        console.error('Failed to save image:', err);
+                    }
+                }
+            }
+        });
+
+        function markUnsaved() {
+            hasUnsavedChanges = true;
+            updateSaveStatus(true);
+        }
+
+        function updateSaveStatus(unsaved) {
+            hasUnsavedChanges = unsaved;
+            saveStatus.textContent = unsaved ? '* Unsaved' : 'Saved';
+            saveStatus.className = unsaved
+                ? 'text-xs text-orange-400 font-medium ml-2'
+                : 'text-xs text-green-400 font-medium ml-2';
+        }
+
+        // Helper functions for textarea
+        function wrapSelection(before, after) {
+            const start = noteContent.selectionStart;
+            const end = noteContent.selectionEnd;
+            const text = noteContent.value;
+            const selected = text.substring(start, end);
+
+            noteContent.value = text.substring(0, start) + before + selected + after + text.substring(end);
+            noteContent.selectionStart = start + before.length;
+            noteContent.selectionEnd = end + before.length;
+            noteContent.focus();
+            markUnsaved();
+        }
+
+        function insertAtLineStart(prefix) {
+            const start = noteContent.selectionStart;
+            const text = noteContent.value;
+
+            let lineStart = start;
+            while (lineStart > 0 && text[lineStart - 1] !== '\n') {
+                lineStart--;
+            }
+
+            noteContent.value = text.substring(0, lineStart) + prefix + text.substring(lineStart);
+            noteContent.selectionStart = noteContent.selectionEnd = start + prefix.length;
+            noteContent.focus();
+            markUnsaved();
+        }
+
+        function insertText(text) {
+            const start = noteContent.selectionStart;
+            const value = noteContent.value;
+            noteContent.value = value.substring(0, start) + text + value.substring(start);
+            noteContent.selectionStart = noteContent.selectionEnd = start + text.length;
+            noteContent.focus();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key.toLowerCase()) {
+                    case 's':
+                        e.preventDefault();
+                        saveNote();
+                        break;
+                    case 'b':
+                        e.preventDefault();
+                        wrapSelection('**', '**');
+                        break;
+                    case 'i':
+                        e.preventDefault();
+                        wrapSelection('*', '*');
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

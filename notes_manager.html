@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+
+<html class="" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Note Management Window</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {primary: "#D0BB95", "background-light": "#f7f7f6", "background-dark": "#1d1a15", "surface-dark": "#1a2436", "surface-light": "#ffffff"}, fontFamily: {display: "Plus Jakarta Sans", body: ["Plus Jakarta Sans", "Noto Sans", "sans-serif"]}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}}}};</script>
+<style>
+        /* Custom scrollbar for a native feel */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="bg-transparent flex items-center justify-center min-h-screen p-4 font-display">
+<!-- Main Window Container mimicking a floating desktop window -->
+<div class="w-full max-w-[900px] h-[600px] bg-background-light dark:bg-background-dark rounded-xl shadow-2xl overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+<!-- Header -->
+<header class="flex items-center justify-between px-6 py-4 bg-surface-light dark:bg-surface-dark border-b border-slate-200 dark:border-slate-800 shrink-0 select-none drag-handle">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">sticky_note_2</span>
+</div>
+<h1 class="text-slate-900 dark:text-white text-lg font-bold tracking-tight">My Notes</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center size-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+<div class="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-1"></div>
+<button class="flex items-center justify-center size-8 rounded-lg hover:bg-red-500 hover:text-white text-slate-500 dark:text-slate-400 transition-colors">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area: Split View -->
+<div class="flex flex-1 overflow-hidden">
+<!-- Sidebar / List View -->
+<div class="w-[360px] flex flex-col border-r border-slate-200 dark:border-slate-800 bg-background-light dark:bg-[#0c111a]">
+<!-- Search & Filters -->
+<div class="p-4 space-y-4">
+<!-- Search Bar -->
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-2.5 rounded-lg bg-white dark:bg-surface-dark border-0 ring-1 ring-slate-200 dark:ring-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary focus:outline-none text-sm transition-shadow" placeholder="Search notes..." type="text"/>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+<button class="px-3 py-1.5 rounded-full bg-primary text-white text-xs font-semibold whitespace-nowrap shadow-sm shadow-primary/25">All Notes</button>
+<button class="px-3 py-1.5 rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-medium whitespace-nowrap transition-colors">Work</button>
+<button class="px-3 py-1.5 rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-medium whitespace-nowrap transition-colors">Personal</button>
+<button class="px-3 py-1.5 rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-medium whitespace-nowrap transition-colors">Favorites</button>
+</div>
+</div>
+<!-- Note List -->
+<div class="flex-1 overflow-y-auto px-3 pb-4 space-y-2">
+<!-- Active Item -->
+<div class="group relative p-3 rounded-lg bg-white dark:bg-surface-dark border border-primary/30 shadow-sm cursor-pointer hover:border-primary transition-all">
+<div class="absolute right-3 top-3 opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[16px] text-primary">edit_note</span>
+</div>
+<div class="flex items-start gap-3">
+<div class="mt-1 size-2 rounded-full bg-primary shrink-0"></div>
+<div class="flex-1 min-w-0">
+<h3 class="text-sm font-semibold text-slate-900 dark:text-white truncate pr-6">Product Roadmap Q4</h3>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">Review the timeline for the new feature launch. Ensure the marketing team is aligned on the dates...</p>
+<div class="mt-2 flex items-center gap-2">
+<span class="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">Work</span>
+<span class="text-[10px] text-slate-400">2h ago</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Inactive Item -->
+<div class="group relative p-3 rounded-lg bg-transparent hover:bg-white dark:hover:bg-surface-dark border border-transparent hover:border-slate-200 dark:hover:border-slate-700 cursor-pointer transition-all">
+<div class="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><span class="material-symbols-outlined text-[18px]">push_pin</span></button>
+</div>
+<div class="flex items-start gap-3">
+<div class="mt-1 size-2 rounded-full bg-transparent shrink-0"></div>
+<div class="flex-1 min-w-0">
+<h3 class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate pr-6">Grocery List</h3>
+<p class="text-xs text-slate-500 dark:text-slate-500 mt-1 line-clamp-2 leading-relaxed">Milk, Eggs (12 pack), Sourdough bread, Avocados, Coffee beans from the local roaster...</p>
+<div class="mt-2 flex items-center gap-2">
+<span class="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">Personal</span>
+<span class="text-[10px] text-slate-400">Yesterday</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Inactive Item -->
+<div class="group relative p-3 rounded-lg bg-transparent hover:bg-white dark:hover:bg-surface-dark border border-transparent hover:border-slate-200 dark:hover:border-slate-700 cursor-pointer transition-all">
+<div class="flex items-start gap-3">
+<div class="mt-1 size-2 rounded-full bg-transparent shrink-0"></div>
+<div class="flex-1 min-w-0">
+<h3 class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate pr-6">Design Inspiration</h3>
+<p class="text-xs text-slate-500 dark:text-slate-500 mt-1 line-clamp-2 leading-relaxed">Check out the new brutalist web design trends. Collect some references for the next project...</p>
+<div class="mt-2 flex items-center gap-2">
+<span class="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">Design</span>
+<span class="text-[10px] text-slate-400">Oct 24</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Inactive Item -->
+<div class="group relative p-3 rounded-lg bg-transparent hover:bg-white dark:hover:bg-surface-dark border border-transparent hover:border-slate-200 dark:hover:border-slate-700 cursor-pointer transition-all">
+<div class="flex items-start gap-3">
+<div class="mt-1 size-2 rounded-full bg-transparent shrink-0"></div>
+<div class="flex-1 min-w-0">
+<h3 class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate pr-6">Meeting Notes: Alpha Team</h3>
+<p class="text-xs text-slate-500 dark:text-slate-500 mt-1 line-clamp-2 leading-relaxed">Action items: John to fix the login bug, Sarah to update the documentation...</p>
+<div class="mt-2 flex items-center gap-2">
+<span class="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">Work</span>
+<span class="text-[10px] text-slate-400">Oct 20</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Floating Action Button (Mobile style but in sidebar) -->
+<div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-surface-light dark:bg-surface-dark">
+<button class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary hover:bg-blue-600 text-white py-2.5 font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>New Note</span>
+</button>
+</div>
+</div>
+<!-- Detail View (Editor Placeholder) -->
+<div class="flex-1 flex flex-col bg-surface-light dark:bg-background-dark relative">
+<!-- Editor Toolbar -->
+<div class="flex items-center justify-between px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-surface-light dark:bg-surface-dark/50 backdrop-blur-sm z-10">
+<div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Last edited 2 hours ago</div>
+<div class="flex items-center gap-1">
+<button class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors" title="Pin Note">
+<span class="material-symbols-outlined text-[20px]">keep</span>
+</button>
+<button class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors" title="Copy to Clipboard">
+<span class="material-symbols-outlined text-[20px]">content_copy</span>
+</button>
+<button class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors" title="Delete Note">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Content Area -->
+<div class="flex-1 overflow-y-auto p-8">
+<input class="w-full bg-transparent border-none p-0 text-3xl font-bold text-slate-900 dark:text-white placeholder:text-slate-300 focus:ring-0 mb-4" placeholder="Note Title" type="text" value="Product Roadmap Q4"/>
+<div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300">
+<p>Review the timeline for the new feature launch. Ensure the marketing team is aligned on the dates.</p>
+<ul class="list-disc pl-5 space-y-2 mt-4">
+<li>Check Q3 deliverables status</li>
+<li>Sync with engineering lead on technical debt</li>
+<li>Draft announcement blog post</li>
+<li><strong>Deadline:</strong> November 15th</li>
+</ul>
+<p class="mt-6 text-slate-500 italic text-sm">Notes from standup:</p>
+<p class="text-sm">Remember to update the Jira board before EOD.</p>
+</div>
+</div>
+<!-- Footer / Status Bar -->
+<div class="px-6 py-2 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center bg-surface-light dark:bg-surface-dark text-[11px] text-slate-400">
+<div class="flex items-center gap-2">
+<span class="flex size-2 bg-green-500 rounded-full"></span>
+                        Saved
+                    </div>
+<div>128 words</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>
