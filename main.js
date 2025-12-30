@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen, globalShortcut, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, globalShortcut, dialog, shell, Tray, Menu } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 const { v4: uuidv4 } = require('uuid');
@@ -52,6 +52,63 @@ initStore();
 let floatingBallWindow = null;
 let quickNoteWindow = null;
 let noteManagerWindow = null;
+let tray = null;
+
+// Create system tray
+function createTray() {
+    const { nativeImage } = require('electron');
+    const iconPath = path.join(__dirname, 'bot.png');
+
+    // Create nativeImage and resize for tray
+    let icon = nativeImage.createFromPath(iconPath);
+    // Resize to standard tray size (16x16 or 32x32 depending on DPI)
+    // Electron's Tray usually handles this better when given a NativeImage
+    const trayIcon = icon.resize({ width: 16, height: 16 });
+
+    tray = new Tray(trayIcon);
+
+    const contextMenu = Menu.buildFromTemplate([
+        {
+            label: 'Open Manager',
+            click: () => createNoteManagerWindow()
+        },
+        {
+            label: 'Show/Hide Floating Ball',
+            click: () => {
+                if (floatingBallWindow) {
+                    if (floatingBallWindow.isVisible()) {
+                        floatingBallWindow.hide();
+                    } else {
+                        floatingBallWindow.show();
+                    }
+                } else {
+                    createFloatingBallWindow();
+                }
+            }
+        },
+        { type: 'separator' },
+        {
+            label: 'Quit',
+            click: () => app.quit()
+        }
+    ]);
+
+    tray.setToolTip('Orbital Notes');
+    tray.setContextMenu(contextMenu);
+
+    // Left click to toggle floating ball
+    tray.on('click', () => {
+        if (floatingBallWindow) {
+            if (floatingBallWindow.isVisible()) {
+                floatingBallWindow.hide();
+            } else {
+                floatingBallWindow.show();
+            }
+        } else {
+            createFloatingBallWindow();
+        }
+    });
+}
 
 // Create floating ball window
 function createFloatingBallWindow() {
@@ -169,6 +226,7 @@ function createQuickNoteWindow(noteId = null) {
         minimizable: true,
         maximizable: false,
         alwaysOnTop: true,
+        icon: path.join(__dirname, 'bot.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -227,6 +285,7 @@ function createNoteManagerWindow() {
         resizable: true,
         minimizable: true,
         maximizable: true,
+        icon: path.join(__dirname, 'bot.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -261,6 +320,7 @@ function createNoteManagerWindow() {
 
 // App ready
 app.whenReady().then(() => {
+    createTray();
     createFloatingBallWindow();
     registerGlobalShortcut();
 
