@@ -14,8 +14,8 @@
 
         html,
         body {
-            width: 120px;
-            height: 120px;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
             background: transparent;
             -webkit-app-region: no-drag;
@@ -62,12 +62,11 @@
         }
 
         #robot-container {
-            width: 120px;
-            height: 120px;
+            width: 100%;
+            height: 100%;
             cursor: grab;
             user-select: none;
             touch-action: none;
-            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.2));
             transition: transform 0.1s;
         }
 
@@ -78,6 +77,10 @@
 
         #robot-container.floating .robot-body {
             animation: float 3s ease-in-out infinite;
+        }
+
+        .robot-body {
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.15));
         }
 
         .antenna-group {
@@ -179,6 +182,20 @@
         let dragOffsetX, dragOffsetY; // 鼠标距离窗口左上角的偏移量
         let startScreenX, startScreenY; // 拖拽开始时的屏幕坐标，用于判断是否仅仅是点击
         let hasMoved = false;
+
+        // Initialize size from settings
+        if (window.noteAPI) {
+            window.noteAPI.getSettings().then(settings => {
+                const size = settings.floatingBallSize || 120;
+                // Window size is already set by main.js, but we ensure content scale
+            });
+
+            window.noteAPI.onSettingsUpdated((settings) => {
+                if (settings.floatingBallSize) {
+                    console.log('Size updated:', settings.floatingBallSize);
+                }
+            });
+        }
 
         // 获取屏幕坐标的辅助函数
         const getScreenCoords = (e) => {

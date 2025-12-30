@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Note Manager</title>
+    <title>Orbital Notes</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap"
@@ -39,23 +39,45 @@
             }
         };
     </script>
+    <script>
+        // Configure marked for GFM (GitHub Flavored Markdown) with table support
+        marked.setOptions({
+            gfm: true,
+            breaks: true,
+            headerIds: false,
+            mangle: false
+        });
+    </script>
     <style>
-        /* Custom scrollbar */
+        /* Custom scrollbar - more visible */
         ::-webkit-scrollbar {
-            width: 6px;
+            width: 8px;
+            height: 8px;
         }
 
         ::-webkit-scrollbar-track {
-            background: transparent;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .dark ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 3px;
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
+            background: #94a3b8;
+        }
+
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
         }
 
         /* Drag handle */
@@ -91,22 +113,43 @@
         }
 
         .prose code {
-            background-color: rgba(0, 0, 0, 0.1);
-            padding: 0.2em 0.4em;
+            background-color: #e2e8f0;
+            color: #0f172a;
+            padding: 0.25em 0.5em;
             border-radius: 4px;
-            font-family: monospace;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .dark .prose code {
+            background-color: #1e293b;
+            color: #e2e8f0;
         }
 
         .prose pre {
-            background-color: rgba(0, 0, 0, 0.1);
-            padding: 1em;
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 1.25em;
             border-radius: 8px;
             overflow-x: auto;
+            margin: 1em 0;
+        }
+
+        .dark .prose pre {
+            background-color: #0f172a;
+            border-color: #334155;
         }
 
         .prose pre code {
             background: none;
             padding: 0;
+            color: #0f172a;
+            font-weight: 400;
+        }
+
+        .dark .prose pre code {
+            color: #e2e8f0;
         }
 
         .prose a {
@@ -147,6 +190,133 @@
             line-height: 1.6;
         }
 
+        /* Markdown table styles */
+        .prose table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+            font-size: 0.9em;
+            overflow-x: auto;
+            display: block;
+        }
+
+        .prose thead {
+            background-color: #f1f5f9;
+        }
+
+        .dark .prose thead {
+            background-color: #1e293b;
+        }
+
+        .prose th,
+        .prose td {
+            border: 1px solid #cbd5e1;
+            padding: 0.75em 1em;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .dark .prose th,
+        .dark .prose td {
+            border-color: #334155;
+        }
+
+        .prose th {
+            font-weight: 600;
+            background-color: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .dark .prose th {
+            background-color: #1e293b;
+            color: #e2e8f0;
+        }
+
+        .prose tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .dark .prose tr:nth-child(even) {
+            background-color: #0f172a;
+        }
+
+        .prose tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        .dark .prose tr:hover {
+            background-color: #1e293b;
+        }
+
+        /* Custom Components: Note & Accordion */
+        .custom-note {
+            background-color: #fef9c3;
+            border-left: 4px solid #facc15;
+            padding: 1rem 1.25rem;
+            margin: 1.5rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+            color: #854d0e;
+        }
+
+        .dark .custom-note {
+            background-color: #422006;
+            border-left-color: #facc15;
+            color: #fef08a;
+        }
+
+        .custom-accordion {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            margin: 1rem 0;
+            overflow: hidden;
+            background: #fff;
+            transition: all 0.2s ease;
+        }
+
+        .dark .custom-accordion {
+            border-color: #334155;
+            background: #1e293b;
+        }
+
+        .custom-accordion summary {
+            padding: 0.875rem 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #f8fafc;
+            color: #1e293b;
+            user-select: none;
+        }
+
+        .dark .custom-accordion summary {
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+
+        .custom-accordion summary::before {
+            content: "\e5cc";
+            font-family: 'Material Symbols Outlined';
+            font-size: 20px;
+            transition: transform 0.2s ease;
+            color: #94a3b8;
+        }
+
+        .custom-accordion[open] summary::before {
+            transform: rotate(90deg);
+        }
+
+        .custom-accordion .accordion-content {
+            padding: 1.25rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .dark .custom-accordion .accordion-content {
+            border-top-color: #334155;
+        }
+
         /* Delete confirmation modal */
         .modal-overlay {
             position: fixed;
@@ -179,6 +349,31 @@
         .modal-overlay.show .modal-content {
             transform: scale(1);
         }
+
+        /* Resizer styles */
+        .resizer {
+            width: 4px;
+            cursor: col-resize;
+            background-color: transparent;
+            transition: background-color 0.2s;
+            z-index: 50;
+            position: relative;
+        }
+
+        .resizer:hover,
+        .resizer.resizing {
+            background-color: #D0BB95;
+            /* primary color */
+        }
+
+        .resizer::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: -2px;
+            right: -2px;
+        }
     </style>
 </head>
 
@@ -194,15 +389,26 @@
                 <div class="size-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
                     <span class="material-symbols-outlined text-[20px]">sticky_note_2</span>
                 </div>
-                <h1 class="text-slate-900 dark:text-white text-lg font-bold tracking-tight">My Notes</h1>
+                <h1 class="text-slate-900 dark:text-white text-lg font-bold tracking-tight">Orbital Notes</h1>
                 <span id="noteCount" class="text-xs text-slate-400 ml-2">(0 notes)</span>
             </div>
             <div class="flex items-center gap-2">
                 <button id="btnSettings"
-                    class="flex items-center justify-center size-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors">
+                    class="flex items-center justify-center size-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
+                    title="Settings">
                     <span class="material-symbols-outlined text-[20px]">settings</span>
                 </button>
                 <div class="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-1"></div>
+                <button id="btnMinimize"
+                    class="flex items-center justify-center size-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
+                    title="Minimize">
+                    <span class="material-symbols-outlined text-[20px]">remove</span>
+                </button>
+                <button id="btnFullscreen"
+                    class="flex items-center justify-center size-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
+                    title="Toggle Fullscreen">
+                    <span id="fullscreenIcon" class="material-symbols-outlined text-[20px]">fullscreen</span>
+                </button>
                 <button id="btnClose"
                     class="flex items-center justify-center size-8 rounded-lg hover:bg-red-500 hover:text-white text-slate-500 dark:text-slate-400 transition-colors">
                     <span class="material-symbols-outlined text-[20px]">close</span>
@@ -214,8 +420,9 @@
         <div class="flex flex-1 overflow-hidden">
 
             <!-- Sidebar / List View -->
-            <div
-                class="w-[360px] flex flex-col border-r border-slate-200 dark:border-slate-800 bg-background-light dark:bg-[#0c111a]">
+            <div id="sidebar"
+                class="flex flex-col border-r border-slate-200 dark:border-slate-800 bg-background-light dark:bg-[#0c111a]"
+                style="width: 360px;">
 
                 <!-- Search & Filters -->
                 <div class="p-4 space-y-4">
@@ -253,8 +460,12 @@
                 </div>
             </div>
 
+            <!-- Resizer -->
+            <div id="resizer" class="resizer shadow-sm"></div>
+
             <!-- Detail View -->
-            <div id="detailView" class="flex-1 flex flex-col bg-surface-light dark:bg-background-dark relative">
+            <div id="detailView"
+                class="flex-1 flex flex-col bg-surface-light dark:bg-background-dark relative overflow-hidden">
 
                 <!-- Empty State -->
                 <div id="emptyState" class="flex-1 flex flex-col items-center justify-center text-slate-400">
@@ -264,7 +475,7 @@
                 </div>
 
                 <!-- Note Detail (hidden by default) -->
-                <div id="noteDetail" class="hidden flex-1 flex flex-col">
+                <div id="noteDetail" class="hidden flex-1 flex flex-col overflow-hidden">
                     <!-- Editor Toolbar -->
                     <div
                         class="flex items-center justify-between px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-surface-light dark:bg-surface-dark/50 backdrop-blur-sm z-10">
@@ -309,7 +520,7 @@
                     </div>
 
                     <!-- Content Area -->
-                    <div class="flex-1 overflow-y-auto p-8 flex flex-col">
+                    <div class="flex-1 overflow-y-auto p-8 flex flex-col min-h-0">
                         <!-- Preview Mode -->
                         <div id="viewArea">
                             <h1 id="noteTitle" class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Note Title
@@ -392,6 +603,18 @@
                         </div>
                         <p class="text-xs text-slate-400 mt-1">Requires restart to apply changes.</p>
                     </div>
+
+                    <div class="pt-2">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            Floating Ball Size: <span id="sizeValue" class="text-primary font-bold">120</span>px
+                        </label>
+                        <input id="sizeInput" type="range" min="40" max="240" step="10" value="120"
+                            class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>Small (40px)</span>
+                            <span>Large (240px)</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Shortcuts Tab -->
@@ -469,12 +692,23 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
-            // Handle external links
+            // Handle external links robustly
             document.addEventListener('click', (e) => {
                 const link = e.target.closest('a');
-                if (link && link.href.startsWith('http')) {
+                if (!link) return;
+
+                const href = link.getAttribute('href');
+                if (!href || href.startsWith('#')) return;
+
+                // If it's an external link or a "pretend" relative link that's actually external
+                if (href.startsWith('http') || href.includes('.') || href.includes('://')) {
                     e.preventDefault();
-                    window.noteAPI?.openExternal(link.href);
+                    let url = href;
+                    // If it looks like a domain but missing protocol, add it
+                    if (!href.includes('://') && !href.startsWith('mailto:')) {
+                        url = 'https://' + href;
+                    }
+                    window.noteAPI?.openExternal(url);
                 }
             });
 
@@ -487,6 +721,46 @@
                     await loadNotes();
                 });
             }
+
+            // Sidebar Resizer Logic
+            const resizer = document.getElementById('resizer');
+            const sidebar = document.getElementById('sidebar');
+            let isResizing = false;
+
+            resizer.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                resizer.classList.add('resizing');
+                document.body.style.cursor = 'col-resize';
+                // Disable pointer events on iframe/other content to prevent interference
+                document.body.style.userSelect = 'none';
+
+                // Track mouse movement
+                const onMouseMove = (moveEvent) => {
+                    if (!isResizing) return;
+
+                    const minWidth = window.innerWidth / 5;
+                    const maxWidth = window.innerWidth * 0.8;
+                    let newWidth = moveEvent.clientX;
+
+                    if (newWidth < minWidth) newWidth = minWidth;
+                    if (newWidth > maxWidth) newWidth = maxWidth;
+
+                    sidebar.style.width = `${newWidth}px`;
+                };
+
+                const onMouseUp = () => {
+                    isResizing = false;
+                    resizer.classList.remove('resizing');
+                    document.body.style.cursor = 'default';
+                    document.body.style.userSelect = 'auto';
+
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
         });
 
         // Load notes
@@ -650,7 +924,21 @@
             noteDetail.classList.remove('hidden');
 
             document.getElementById('noteTitle').textContent = note.title;
-            document.getElementById('noteContent').innerHTML = marked.parse(note.content);
+
+            // Pre-process custom tags to allow markdown parsing inside them
+            let content = note.content;
+
+            // Convert <Note>...</Note>
+            content = content.replace(/<Note>([\s\S]*?)<\/Note>/gi, (match, p1) => {
+                return `<div class="custom-note">${p1}</div>`;
+            });
+
+            // Convert <Accordion title="...">...</Accordion>
+            content = content.replace(/<Accordion\s+title="([^"]+)">([\s\S]*?)<\/Accordion>/gi, (match, title, p1) => {
+                return `<details class="custom-accordion"><summary>${title}</summary><div class="accordion-content">${p1}</div></details>`;
+            });
+
+            document.getElementById('noteContent').innerHTML = marked.parse(content);
             document.getElementById('lastEdited').textContent = `Last edited ${getTimeAgo(note.updatedAt)}`;
             document.getElementById('wordCount').textContent = `${countWords(note.content)} words`;
 
@@ -674,6 +962,21 @@
         // Window controls
         document.getElementById('btnClose').addEventListener('click', () => {
             window.noteAPI?.closeWindow();
+        });
+
+        document.getElementById('btnMinimize').addEventListener('click', () => {
+            window.noteAPI?.minimizeWindow();
+        });
+
+        document.getElementById('btnFullscreen').addEventListener('click', () => {
+            window.noteAPI?.toggleMaximize();
+            // Toggle icon between fullscreen and fullscreen_exit
+            const icon = document.getElementById('fullscreenIcon');
+            if (icon.textContent === 'fullscreen') {
+                icon.textContent = 'fullscreen_exit';
+            } else {
+                icon.textContent = 'fullscreen';
+            }
         });
 
         // New note button
@@ -879,6 +1182,8 @@
 
             // Populate General
             document.getElementById('dataPathInput').value = settings.dataPath;
+            document.getElementById('sizeInput').value = settings.floatingBallSize || 120;
+            document.getElementById('sizeValue').textContent = settings.floatingBallSize || 120;
 
             // Populate Shortcuts
             document.getElementById('shortcutInput').value = settings.globalShortcut || 'Alt+1';
@@ -930,12 +1235,18 @@
             shortcutInput.value = shortcut;
         });
 
+        // Size Input Live Preview
+        document.getElementById('sizeInput').addEventListener('input', (e) => {
+            document.getElementById('sizeValue').textContent = e.target.value;
+        });
+
         // Save Settings
         btnSaveSettings.addEventListener('click', async () => {
             if (!window.noteAPI) return;
 
             const newPath = document.getElementById('dataPathInput').value;
             const newShortcut = document.getElementById('shortcutInput').value;
+            const newSize = parseInt(document.getElementById('sizeInput').value);
 
             // Check Conflict
             if (newShortcut !== currentSettings.globalShortcut) {
@@ -949,7 +1260,8 @@
 
             const newSettings = {
                 dataPath: newPath,
-                globalShortcut: newShortcut
+                globalShortcut: newShortcut,
+                floatingBallSize: newSize
             };
 
             const result = await window.noteAPI.saveSettings(newSettings);

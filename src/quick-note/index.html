@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Quick Note</title>
+    <title>Orbital Notes - Quick Note</title>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com" rel="preconnect" />
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
@@ -120,9 +120,31 @@
         }
 
         .markdown-preview img {
-            max-width: 100%;
+            display: block;
+            max-width: 60%;
+            max-height: 200px;
+            object-fit: contain;
             border-radius: 8px;
+            margin: 1em auto;
+            cursor: zoom-in;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .markdown-preview img:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .markdown-preview img.full-size {
+            display: inline-block;
+            max-width: 100%;
+            max-height: none;
+            cursor: zoom-out;
             margin: 0.5em 0;
+            border: none;
+            box-shadow: none;
         }
 
         .markdown-preview p {
@@ -245,7 +267,7 @@
                 </div>
                 <h2 id="windowTitle"
                     class="text-base font-bold leading-tight tracking-tight truncate px-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-text"
-                    title="Double click to rename">Quick Note</h2>
+                    title="Double click to rename">Orbital Notes</h2>
                 <span id="saveStatus" class="text-xs text-gray-400 dark:text-gray-500 font-medium ml-2 flex-shrink-0">*
                     Unsaved</span>
             </div>
@@ -415,7 +437,7 @@
             const newTitle = windowTitle.textContent.trim();
             // If empty, reset to default
             if (!newTitle) {
-                windowTitle.textContent = 'Quick Note';
+                windowTitle.textContent = 'Orbital Notes';
             }
 
             markUnsaved(); // Title change counts as change
@@ -432,12 +454,18 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            // Handle external links
+            // Handle external links and image zooming
             document.addEventListener('click', (e) => {
                 const link = e.target.closest('a');
                 if (link && link.href.startsWith('http')) {
                     e.preventDefault();
                     window.noteAPI?.openExternal(link.href);
+                    return;
+                }
+
+                // Handle image zoom in preview
+                if (e.target.tagName === 'IMG' && previewArea.contains(e.target)) {
+                    e.target.classList.toggle('full-size');
                 }
             });
 
@@ -495,7 +523,7 @@
                 noteContent.value = note.content || '';
 
                 // Update title
-                windowTitle.textContent = note.title || 'Quick Note';
+                windowTitle.textContent = note.title || 'Orbital Notes';
 
                 tags = note.tags || [];
                 images = note.images || [];
@@ -691,7 +719,7 @@
             // My finishTitleEdit logic resets empty title to "Quick Note".
 
             // If title is "Quick Note" and we have valid content, maybe we can try to find a better title?
-            if (title === 'Quick Note') {
+            if (title === 'Orbital Notes') {
                 const lines = content.split('\n');
                 for (const line of lines) {
                     const trimmed = line.trim();

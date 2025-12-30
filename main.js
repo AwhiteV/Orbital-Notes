@@ -24,8 +24,8 @@ function initStore() {
         defaults: {
             notes: [],
             settings: {
-                floatingBallPosition: null,
-                globalShortcut: 'Alt+1' // Default shortcut
+                globalShortcut: 'Alt+1', // Default shortcut
+                floatingBallSize: 120 // Default size
             }
         }
     });
@@ -62,9 +62,10 @@ function createFloatingBallWindow() {
     const defaultX = screenWidth - 150;
     const defaultY = screenHeight / 2 - 60;
 
+    const size = store.get('settings.floatingBallSize', 120);
     floatingBallWindow = new BrowserWindow({
-        width: 120,
-        height: 120,
+        width: size,
+        height: size,
         x: savedPosition?.x || defaultX,
         y: savedPosition?.y || defaultY,
         transparent: true,
@@ -72,6 +73,8 @@ function createFloatingBallWindow() {
         alwaysOnTop: true,
         skipTaskbar: true,
         resizable: false,
+        minWidth: 1,
+        minHeight: 1,
         hasShadow: false,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
@@ -93,7 +96,8 @@ function createFloatingBallWindow() {
 
     // Handle internal navigation (a href click)
     floatingBallWindow.webContents.on('will-navigate', (event, url) => {
-        if (url.startsWith('http:') || url.startsWith('https:')) {
+        const isSelf = url.startsWith('file://') && (url.endsWith('index.html') || url.includes('/src/'));
+        if (!isSelf) {
             event.preventDefault();
             shell.openExternal(url);
         }
@@ -185,7 +189,8 @@ function createQuickNoteWindow(noteId = null) {
 
     // Handle internal navigation (a href click)
     quickNoteWindow.webContents.on('will-navigate', (event, url) => {
-        if (url.startsWith('http:') || url.startsWith('https:')) {
+        const isSelf = url.startsWith('file://') && (url.endsWith('index.html') || url.includes('/src/'));
+        if (!isSelf) {
             event.preventDefault();
             shell.openExternal(url);
         }
@@ -242,7 +247,8 @@ function createNoteManagerWindow() {
 
     // Handle internal navigation (a href click)
     noteManagerWindow.webContents.on('will-navigate', (event, url) => {
-        if (url.startsWith('http:') || url.startsWith('https:')) {
+        const isSelf = url.startsWith('file://') && (url.endsWith('index.html') || url.includes('/src/'));
+        if (!isSelf) {
             event.preventDefault();
             shell.openExternal(url);
         }
@@ -284,12 +290,25 @@ app.on('will-quit', () => {
 ipcMain.handle('get-settings', () => {
     return {
         dataPath: currentDataPath,
-        globalShortcut: store.get('settings.globalShortcut', 'Alt+1')
+        globalShortcut: store.get('settings.globalShortcut', 'Alt+1'),
+        floatingBallSize: store.get('settings.floatingBallSize', 120)
     };
 });
 
 ipcMain.handle('save-settings', (event, newSettings) => {
     let restartRequired = false;
+
+    // Handle Floating Ball Size
+    const oldSize = store.get('settings.floatingBallSize');
+    if (newSettings.floatingBallSize && newSettings.floatingBallSize !== oldSize) {
+        store.set('settings.floatingBallSize', newSettings.floatingBallSize);
+        if (floatingBallWindow) {
+            // Toggle resizable to ensure OS allows the change, then lock it again to prevent square shadow
+            floatingBallWindow.setResizable(true);
+            floatingBallWindow.setSize(newSettings.floatingBallSize, newSettings.floatingBallSize);
+            floatingBallWindow.setResizable(false);
+        }
+    }
 
     // Handle Shortcut
     const oldShortcut = store.get('settings.globalShortcut');
@@ -357,6 +376,17 @@ ipcMain.on('minimize-window', (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     if (window) {
         window.minimize();
+    }
+});
+
+ipcMain.on('toggle-maximize', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if (window) {
+        if (window.isMaximized()) {
+            window.unmaximize();
+        } else {
+            window.maximize();
+        }
     }
 });
 

@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('noteAPI', {
     openNoteManager: () => ipcRenderer.send('open-note-manager'),
     closeWindow: () => ipcRenderer.send('close-window'),
     minimizeWindow: () => ipcRenderer.send('minimize-window'),
+    toggleMaximize: () => ipcRenderer.send('toggle-maximize'),
     moveFloatingBall: (x, y) => ipcRenderer.send('move-floating-ball', { x, y }),
     getFloatingBallPosition: () => ipcRenderer.invoke('get-floating-ball-position'),
     openExternal: (url) => ipcRenderer.send('open-external', url),
@@ -42,5 +43,9 @@ contextBridge.exposeInMainWorld('noteAPI', {
     onLoadNote: (callback) => {
         ipcRenderer.on('load-note', (event, noteId) => callback(noteId));
         return () => ipcRenderer.removeListener('load-note', callback);
+    },
+    onSettingsUpdated: (callback) => {
+        ipcRenderer.on('settings-updated', (event, settings) => callback(settings));
+        return () => ipcRenderer.removeListener('settings-updated', callback);
     }
 });
