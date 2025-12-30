@@ -7,3 +7,10 @@ dist/
 .DS_Store
 out/
 .env
+
+# Prototypes and Screenshots
+notes_manager.html
+Floating_ball_bot.html
+quick_create_notes.html
+notes_manager.png
+quick_create_notes.png
