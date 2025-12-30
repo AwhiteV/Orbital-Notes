@@ -20,15 +20,22 @@
 ### 🪐 笔记管理器
 ![笔记管理器](assets/note_manager.jpg)
 
-### 📝 编辑与预览
-| 编辑模式 | Markdown 渲染预览 |
-| :---: | :---: |
-| ![编辑模式](assets/quick_notes_edit.png) | ![渲染预览](assets/quick_notes_md_preview.png) |
+### 📝 编辑与预览界面
+#### 编辑模式
+![编辑模式](assets/quick_notes_edit.png)
+
+#### Markdown 渲染预览
+![渲染预览](assets/quick_notes_md_preview.png)
 
 ### ⚙️ 设置与标签管理
-| 常规设置 | 快捷键配置 | 标签管理 |
-| :---: | :---: | :---: |
-| ![常规设置](assets/settings.jpg) | ![快捷键配置](assets/settings_shortcuts.jpg) | ![标签管理](assets/tag.png) |
+#### 常规设置
+![常规设置](assets/settings.jpg)
+
+#### 快捷键配置
+![快捷键配置](assets/settings_shortcuts.jpg)
+
+#### 标签管理
+![标签管理](assets/tag.png)
 
 ---
 
