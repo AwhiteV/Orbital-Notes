@@ -592,6 +592,9 @@
                 <button
                     class="settings-tab px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                     data-tab="tags">Tags</button>
+                <button
+                    class="settings-tab px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                    data-tab="dify">Dify</button>
             </div>
 
             <!-- Tab Content -->
@@ -622,34 +625,6 @@
                         </div>
                     </div>
 
-                    <!-- Dify Configuration -->
-                    <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
-                        <h4
-                            class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-[18px]">api</span>
-                            Dify Configuration
-                        </h4>
-
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                    Base URL
-                                </label>
-                                <input id="difyBaseUrlInput" type="text" placeholder="http://192.168.3.189:8087/v1"
-                                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
-                                <p class="text-xs text-slate-400 mt-1">Dify API base URL (leave empty to use .env)</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                    Workflow API Key
-                                </label>
-                                <input id="difyApiKeyInput" type="password" placeholder="app-xxxxxxxxxxxxxx"
-                                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
-                                <p class="text-xs text-slate-400 mt-1">Workflow API key (leave empty to use .env)</p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Shortcuts Tab -->
@@ -673,6 +648,44 @@
                         </div>
                         <p class="text-xs text-slate-400 mt-2">Click X to delete a tag from the system (removes from
                             filter list only).</p>
+                    </div>
+                </div>
+
+                <!-- Dify Tab -->
+                <div id="tabDify" class="tab-content hidden space-y-4">
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[18px]">api</span>
+                            Dify Workflow Configuration
+                        </h4>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    Base URL
+                                </label>
+                                <input id="difyBaseUrlInput" type="text" placeholder="https://api.dify.ai/v1"
+                                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <p class="text-xs text-slate-400 mt-1">Dify API base URL (leave empty to use .env)</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    Workflow API Key
+                                </label>
+                                <input id="difyApiKeyInput" type="password" placeholder="app-xxxxxxxxxxxxxx"
+                                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <p class="text-xs text-slate-400 mt-1">Workflow API key (leave empty to use .env)</p>
+                            </div>
+                        </div>
+
+                        <div
+                            class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30">
+                            <p class="text-xs text-blue-600 dark:text-blue-400 leading-relaxed">
+                                <span class="font-bold">Note:</span> These settings are used for the AI Daily News
+                                feature. You can find your API key in the Dify Workflow "API Access" section.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
