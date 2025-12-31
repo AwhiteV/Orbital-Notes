@@ -451,11 +451,17 @@
                 </div>
 
                 <!-- New Note Button -->
-                <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-surface-light dark:bg-surface-dark">
+                <div
+                    class="p-4 border-t border-slate-200 dark:border-slate-800 bg-surface-light dark:bg-surface-dark space-y-2">
                     <button id="btnNewNote"
                         class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary hover:opacity-90 text-white py-2.5 font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
                         <span class="material-symbols-outlined text-[20px]">add</span>
                         <span>New Note</span>
+                    </button>
+                    <button id="btnFetchAINews"
+                        class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary hover:opacity-90 text-white py-2.5 font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+                        <span class="material-symbols-outlined text-[20px]">newspaper</span>
+                        <span id="aiNewsButtonText">AI Daily News</span>
                     </button>
                 </div>
             </div>
@@ -613,6 +619,35 @@
                         <div class="flex justify-between text-[10px] text-slate-400 mt-1">
                             <span>Small (40px)</span>
                             <span>Large (240px)</span>
+                        </div>
+                    </div>
+
+                    <!-- Dify Configuration -->
+                    <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <h4
+                            class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[18px]">api</span>
+                            Dify Configuration
+                        </h4>
+
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    Base URL
+                                </label>
+                                <input id="difyBaseUrlInput" type="text" placeholder="http://192.168.3.189:8087/v1"
+                                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <p class="text-xs text-slate-400 mt-1">Dify API base URL (leave empty to use .env)</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    Workflow API Key
+                                </label>
+                                <input id="difyApiKeyInput" type="password" placeholder="app-xxxxxxxxxxxxxx"
+                                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <p class="text-xs text-slate-400 mt-1">Workflow API key (leave empty to use .env)</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1096,6 +1131,57 @@
             }
         });
 
+        // Fetch AI News button
+        const btnFetchAINews = document.getElementById('btnFetchAINews');
+        const aiNewsButtonText = document.getElementById('aiNewsButtonText');
+
+        if (btnFetchAINews) {
+            btnFetchAINews.addEventListener('click', async () => {
+                if (!window.noteAPI) return;
+
+                // Disable button and show loading state
+                btnFetchAINews.disabled = true;
+                const originalText = aiNewsButtonText.textContent;
+                aiNewsButtonText.textContent = '获取中...';
+                btnFetchAINews.style.opacity = '0.7';
+
+                try {
+                    // Call the API
+                    const newNote = await window.noteAPI.fetchAINews();
+
+                    // Success feedback
+                    aiNewsButtonText.textContent = '✓ 成功!';
+                    setTimeout(() => {
+                        aiNewsButtonText.textContent = originalText;
+                        btnFetchAINews.style.opacity = '1';
+                        btnFetchAINews.disabled = false;
+                    }, 2000);
+
+                    // Auto-select the new note
+                    await loadNotes();
+                    if (newNote && newNote.id) {
+                        const note = notes.find(n => n.id === newNote.id);
+                        if (note) {
+                            showNoteDetail(note);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch AI news:', error);
+
+                    // Error feedback
+                    aiNewsButtonText.textContent = '✗ 失败';
+                    setTimeout(() => {
+                        aiNewsButtonText.textContent = originalText;
+                        btnFetchAINews.style.opacity = '1';
+                        btnFetchAINews.disabled = false;
+                    }, 3000);
+
+                    // Show error alert
+                    alert(`获取AI新闻失败:\n${error.message || '未知错误'}\n\n请检查:\n1. Dify 服务是否正常运行\n2. .env 配置是否正确\n3. 网络连接是否正常`);
+                }
+            });
+        }
+
         // Utility functions
         function escapeHtml(text) {
             const div = document.createElement('div');
@@ -1185,6 +1271,10 @@
             document.getElementById('sizeInput').value = settings.floatingBallSize || 120;
             document.getElementById('sizeValue').textContent = settings.floatingBallSize || 120;
 
+            // Populate Dify Configuration
+            document.getElementById('difyBaseUrlInput').value = settings.difyBaseUrl || '';
+            document.getElementById('difyApiKeyInput').value = settings.difyApiKey || '';
+
             // Populate Shortcuts
             document.getElementById('shortcutInput').value = settings.globalShortcut || 'Alt+1';
 
@@ -1258,10 +1348,15 @@
                 }
             }
 
+            const newDifyBaseUrl = document.getElementById('difyBaseUrlInput').value.trim();
+            const newDifyApiKey = document.getElementById('difyApiKeyInput').value.trim();
+
             const newSettings = {
                 dataPath: newPath,
                 globalShortcut: newShortcut,
-                floatingBallSize: newSize
+                floatingBallSize: newSize,
+                difyBaseUrl: newDifyBaseUrl,
+                difyApiKey: newDifyApiKey
             };
 
             const result = await window.noteAPI.saveSettings(newSettings);

@@ -3,6 +3,9 @@ const path = require('path');
 const Store = require('electron-store');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
+const https = require('https');
+const http = require('http');
+require('dotenv').config();
 
 // Config store to hold the data path preference
 const configStore = new Store({
@@ -25,7 +28,9 @@ function initStore() {
             notes: [],
             settings: {
                 globalShortcut: 'Alt+1', // Default shortcut
-                floatingBallSize: 120 // Default size
+                floatingBallSize: 120, // Default size
+                difyBaseUrl: '', // Dify base URL (empty means use .env)
+                difyApiKey: '' // Dify API key (empty means use .env)
             }
         }
     });
@@ -351,7 +356,9 @@ ipcMain.handle('get-settings', () => {
     return {
         dataPath: currentDataPath,
         globalShortcut: store.get('settings.globalShortcut', 'Alt+1'),
-        floatingBallSize: store.get('settings.floatingBallSize', 120)
+        floatingBallSize: store.get('settings.floatingBallSize', 120),
+        difyBaseUrl: store.get('settings.difyBaseUrl', ''),
+        difyApiKey: store.get('settings.difyApiKey', '')
     };
 });
 
@@ -375,6 +382,14 @@ ipcMain.handle('save-settings', (event, newSettings) => {
     if (newSettings.globalShortcut && newSettings.globalShortcut !== oldShortcut) {
         store.set('settings.globalShortcut', newSettings.globalShortcut);
         registerGlobalShortcut();
+    }
+
+    // Handle Dify Configuration
+    if (newSettings.difyBaseUrl !== undefined) {
+        store.set('settings.difyBaseUrl', newSettings.difyBaseUrl);
+    }
+    if (newSettings.difyApiKey !== undefined) {
+        store.set('settings.difyApiKey', newSettings.difyApiKey);
     }
 
     // Handle Data Path
@@ -609,4 +624,104 @@ ipcMain.handle('get-all-tags', () => {
         note.tags.forEach(tag => tagSet.add(tag));
     });
     return Array.from(tagSet);
+});
+
+// Fetch AI News from Dify
+ipcMain.handle('fetch-ai-news', async () => {
+    return new Promise((resolve, reject) => {
+        // Get settings first, fallback to .env
+        const settingsBaseUrl = store.get('settings.difyBaseUrl', '');
+        const settingsApiKey = store.get('settings.difyApiKey', '');
+
+        const baseUrl = settingsBaseUrl || process.env.DIFY_BASE_URL || 'http://192.168.3.189:8087/v1';
+        const apiKey = settingsApiKey || process.env.DIFY_WORKFLOW_API_KEY;
+
+        if (!apiKey) {
+            return reject(new Error('DIFY_WORKFLOW_API_KEY not configured in settings or .env'));
+        }
+
+        // Parse URL
+        const url = new URL(`${baseUrl}/workflows/run`);
+        const isHttps = url.protocol === 'https:';
+        const httpModule = isHttps ? https : http;
+
+        const postData = JSON.stringify({
+            inputs: {},
+            response_mode: 'blocking',
+            user: 'orbital-notes'
+        });
+
+        const options = {
+            hostname: url.hostname,
+            port: url.port || (isHttps ? 443 : 80),
+            path: url.pathname,
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData)
+            }
+        };
+
+        const req = httpModule.request(options, (res) => {
+            let data = '';
+
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            res.on('end', () => {
+                try {
+                    const response = JSON.parse(data);
+
+                    // Check for API errors
+                    if (res.statusCode !== 200) {
+                        return reject(new Error(`API Error: ${response.message || 'Unknown error'}`));
+                    }
+
+                    // Extract text from response
+                    const newsContent = response?.data?.outputs?.text;
+
+                    if (!newsContent) {
+                        return reject(new Error('No content found in API response'));
+                    }
+
+                    // Create note automatically
+                    const notes = store.get('notes') || [];
+                    const today = new Date();
+                    const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+
+                    const newNote = {
+                        id: uuidv4(),
+                        title: `每日AI新闻 - ${dateStr}`,
+                        content: newsContent,
+                        tags: ['AI新闻'],
+                        images: [],
+                        createdAt: today.toISOString(),
+                        updatedAt: today.toISOString(),
+                        pinned: false
+                    };
+
+                    notes.unshift(newNote);
+                    store.set('notes', notes);
+
+                    // Notify note manager to refresh
+                    if (noteManagerWindow) {
+                        noteManagerWindow.webContents.send('notes-updated');
+                    }
+
+                    resolve(newNote);
+                } catch (error) {
+                    reject(new Error(`Failed to parse response: ${error.message}`));
+                }
+            });
+        });
+
+        req.on('error', (error) => {
+            reject(new Error(`Network error: ${error.message}`));
+        });
+
+        req.write(postData);
+        req.end();
+    });
 });

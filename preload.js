@@ -35,6 +35,9 @@ contextBridge.exposeInMainWorld('noteAPI', {
     selectDirectory: () => ipcRenderer.invoke('select-directory'),
     checkShortcutConflict: (shortcut) => ipcRenderer.invoke('check-shortcut-conflict', shortcut),
 
+    // AI News
+    fetchAINews: () => ipcRenderer.invoke('fetch-ai-news'),
+
     // Event listeners
     onNotesUpdated: (callback) => {
         ipcRenderer.on('notes-updated', callback);
