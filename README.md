@@ -23,6 +23,9 @@
 ### 🤖 Orbital 悬浮球界面
 ![悬浮球](assets/bot_display.jpg)
 
+### 📚 AI Daily News
+![AI Daily News](assets/AI_daily_news.jpg)
+
 ### 🪐 笔记管理器
 ![笔记管理器](assets/note_manager.jpg)
 
