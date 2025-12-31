@@ -336,19 +336,89 @@
             visibility: visible;
         }
 
-        .modal-content {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            max-width: 400px;
-            width: 90%;
-            transform: scale(0.9);
-            transition: transform 0.2s;
+        .modal-overlay.show .modal-content {
+            transform: scale(1) translateY(0);
+            opacity: 1;
         }
 
-        .modal-overlay.show .modal-content {
-            transform: scale(1);
+        .modal-content {
+            background: white;
+            border-radius: 1.5rem;
+            /* 更大的圆角 */
+            padding: 2rem;
+            max-width: 440px;
+            width: 90%;
+            transform: scale(0.95) translateY(10px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
         }
+
+        .dark .modal-content {
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Toast Styles */
+        #toastContainer {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column-reverse;
+            /* Stack upwards */
+            gap: 12px;
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: white;
+            color: #1e293b;
+            padding: 12px 20px;
+            border-radius: 9999px;
+            /* Pill shape */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: auto;
+            border: 1px solid #f1f5f9;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dark .toast {
+            background: #1e293b;
+            color: #f1f5f9;
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .toast-icon {
+            font-size: 20px;
+        }
+
+        .toast.success .toast-icon {
+            color: #10b981;
+        }
+
+        .toast.error .toast-icon {
+            color: #ef4444;
+        }
+
+        .toast.info .toast-icon {
+            color: #D0BB95;
+        }
+
 
         /* Resizer styles */
         .resizer {
@@ -373,6 +443,32 @@
             bottom: 0;
             left: -2px;
             right: -2px;
+        }
+
+        /* Batch mode styles */
+        .batch-mode .note-item {
+            padding-left: 2.5rem;
+        }
+
+        .batch-checkbox {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1.125rem;
+            height: 1.125rem;
+            accent-color: #D0BB95;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .batch-checkbox:checked {
+            background-color: #D0BB95;
+        }
+
+        .note-item.selected {
+            background-color: rgba(208, 187, 149, 0.1) !important;
+            border-color: rgba(208, 187, 149, 0.5) !important;
         }
     </style>
 </head>
@@ -445,6 +541,34 @@
                     </div>
                 </div>
 
+                <!-- Batch Mode Header -->
+                <div id="batchModeHeader"
+                    class="hidden px-4 py-2 bg-primary/10 border-b border-primary/20 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="selectAllCheckbox" class="w-4 h-4 accent-primary cursor-pointer">
+                        <span id="selectedCount" class="text-xs font-medium text-slate-600 dark:text-slate-300">0
+                            selected</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="btnBatchExport"
+                            class="px-3 py-1 text-xs font-medium bg-primary text-white rounded-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
+                            <span class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">download</span>
+                                Export
+                            </span>
+                        </button>
+                        <button id="btnBatchDelete"
+                            class="px-3 py-1 text-xs font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
+                            <span class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">delete</span>
+                                Delete
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Note List -->
                 <div id="noteList" class="flex-1 overflow-y-auto px-3 pb-4 space-y-2">
                     <!-- Notes will be rendered here -->
@@ -453,11 +577,18 @@
                 <!-- New Note Button -->
                 <div
                     class="p-4 border-t border-slate-200 dark:border-slate-800 bg-surface-light dark:bg-surface-dark space-y-2">
-                    <button id="btnNewNote"
-                        class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary hover:opacity-90 text-white py-2.5 font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
-                        <span class="material-symbols-outlined text-[20px]">add</span>
-                        <span>New Note</span>
-                    </button>
+                    <div class="flex gap-2">
+                        <button id="btnNewNote"
+                            class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary hover:opacity-90 text-white py-2.5 font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+                            <span class="material-symbols-outlined text-[20px]">add</span>
+                            <span>New Note</span>
+                        </button>
+                        <button id="btnBatchMode"
+                            class="flex items-center justify-center gap-1 px-3 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 py-2.5 font-medium transition-all active:scale-[0.98]"
+                            title="Batch operations">
+                            <span class="material-symbols-outlined text-[18px]">checklist</span>
+                        </button>
+                    </div>
                     <button id="btnFetchAINews"
                         class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary hover:opacity-90 text-white py-2.5 font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
                         <span class="material-symbols-outlined text-[20px]">newspaper</span>
@@ -500,6 +631,33 @@
                                     title="Copy to Clipboard">
                                     <span class="material-symbols-outlined text-[20px]">content_copy</span>
                                 </button>
+                                <!-- Export Button with Dropdown -->
+                                <div class="relative">
+                                    <button id="btnExportNote"
+                                        class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
+                                        title="Export Note">
+                                        <span class="material-symbols-outlined text-[20px]">download</span>
+                                    </button>
+                                    <!-- Export Menu -->
+                                    <div id="exportMenu"
+                                        class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-surface-dark rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden z-50">
+                                        <button data-format="markdown"
+                                            class="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[18px]">description</span>
+                                            Export as Markdown
+                                        </button>
+                                        <button data-format="word"
+                                            class="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[18px]">article</span>
+                                            Export as Word
+                                        </button>
+                                        <button data-format="pdf"
+                                            class="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+                                            Export as PDF
+                                        </button>
+                                    </div>
+                                </div>
                                 <button id="btnEditNote"
                                     class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
                                     title="Edit Note">
@@ -716,6 +874,68 @@
         </div>
     </div>
 
+    <!-- Batch Export Modal -->
+    <div id="batchExportModal" class="modal-overlay">
+        <div class="modal-content dark:bg-surface-dark">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Export Notes</h3>
+            <p id="batchExportInfo" class="text-slate-600 dark:text-slate-300 mb-4">Export 0 selected notes</p>
+
+            <div class="space-y-2 mb-6">
+                <button data-format="markdown"
+                    class="batch-format-btn w-full text-left px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary hover:bg-primary/5 transition-all flex items-center gap-3">
+                    <span class="material-symbols-outlined text-[24px] text-slate-500">description</span>
+                    <div>
+                        <div class="font-medium text-slate-700 dark:text-slate-200">Markdown (.md)</div>
+                        <div class="text-xs text-slate-400">Plain text, preserves formatting</div>
+                    </div>
+                </button>
+                <button data-format="word"
+                    class="batch-format-btn w-full text-left px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary hover:bg-primary/5 transition-all flex items-center gap-3">
+                    <span class="material-symbols-outlined text-[24px] text-slate-500">article</span>
+                    <div>
+                        <div class="font-medium text-slate-700 dark:text-slate-200">Word (.docx)</div>
+                        <div class="text-xs text-slate-400">Editable document format</div>
+                    </div>
+                </button>
+                <button data-format="pdf"
+                    class="batch-format-btn w-full text-left px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary hover:bg-primary/5 transition-all flex items-center gap-3">
+                    <span class="material-symbols-outlined text-[24px] text-slate-500">picture_as_pdf</span>
+                    <div>
+                        <div class="font-medium text-slate-700 dark:text-slate-200">PDF (.pdf)</div>
+                        <div class="text-xs text-slate-400">Best for sharing and printing</div>
+                    </div>
+                </button>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <button id="btnCancelBatchExport"
+                    class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Delete Confirmation Modal -->
+    <div id="batchDeleteModal" class="modal-overlay">
+        <div class="modal-content dark:bg-surface-dark">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Delete Notes</h3>
+            <p id="batchDeleteInfo" class="text-slate-600 dark:text-slate-300 mb-4">Are you sure you want to delete 0
+                selected notes?</p>
+            <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800/30 mb-6">
+                <p class="text-sm text-red-600 dark:text-red-400 leading-relaxed">
+                    <span class="font-bold">⚠️ Warning:</span> This action cannot be undone. All selected notes and
+                    their associated images will be permanently deleted.
+                </p>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button id="btnCancelBatchDelete"
+                    class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
+                <button id="btnConfirmBatchDelete"
+                    class="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors">Delete
+                    All</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // State
         let notes = [];
@@ -723,6 +943,8 @@
         let selectedNoteId = null;
         let currentFilter = 'all';
         let searchQuery = '';
+        let isBatchMode = false;
+        let selectedNoteIds = new Set();
 
         // DOM Elements
         const noteList = document.getElementById('noteList');
@@ -735,6 +957,9 @@
         const editArea = document.getElementById('editArea');
         const viewModeButtons = document.getElementById('viewModeButtons');
         const editModeButtons = document.getElementById('editModeButtons');
+        const batchModeHeader = document.getElementById('batchModeHeader');
+        const batchExportModal = document.getElementById('batchExportModal');
+        const batchDeleteModal = document.getElementById('batchDeleteModal');
 
         let isEditMode = false;
 
@@ -903,25 +1128,36 @@
                 return new Date(b.updatedAt) - new Date(a.updatedAt);
             });
 
+            // Apply batch-mode class to noteList container
+            if (isBatchMode) {
+                noteList.classList.add('batch-mode');
+            } else {
+                noteList.classList.remove('batch-mode');
+            }
+
             noteList.innerHTML = sortedNotes.map(note => {
-                const isActive = note.id === selectedNoteId;
+                const isActive = note.id === selectedNoteId && !isBatchMode;
+                const isSelected = selectedNoteIds.has(note.id);
                 const timeAgo = getTimeAgo(note.updatedAt);
                 const preview = note.content.replace(/[#*`\[\]]/g, '').substring(0, 100);
                 const tag = note.tags[0] || '';
 
                 return `
-                <div class="note-item group relative p-3 rounded-lg ${isActive ? 'bg-white dark:bg-surface-dark border border-primary/30 shadow-sm' : 'bg-transparent hover:bg-white dark:hover:bg-surface-dark border border-transparent hover:border-slate-200 dark:hover:border-slate-700'} cursor-pointer transition-all" data-id="${note.id}">
-                    ${isActive ? `
+                <div class="note-item group relative p-3 rounded-lg ${isActive ? 'bg-white dark:bg-surface-dark border border-primary/30 shadow-sm' : isSelected ? 'selected bg-primary/10 border border-primary/30' : 'bg-transparent hover:bg-white dark:hover:bg-surface-dark border border-transparent hover:border-slate-200 dark:hover:border-slate-700'} cursor-pointer transition-all" data-id="${note.id}">
+                    ${isBatchMode ? `
+                        <input type="checkbox" class="batch-checkbox" data-id="${note.id}" ${isSelected ? 'checked' : ''}>
+                    ` : ''}
+                    ${isActive && !isBatchMode ? `
                         <div class="absolute right-3 top-3 opacity-100 transition-opacity">
                             <span class="material-symbols-outlined text-[16px] text-primary">edit_note</span>
                         </div>
-                    ` : `
+                    ` : !isBatchMode ? `
                         <div class="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                             <button class="pin-btn text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" data-id="${note.id}">
                                 <span class="material-symbols-outlined text-[18px]">${note.pinned ? 'keep_off' : 'push_pin'}</span>
                             </button>
                         </div>
-                    `}
+                    ` : ''}
                     <div class="flex items-start gap-3">
                         <div class="mt-1 size-2 rounded-full ${note.pinned ? 'bg-primary' : 'bg-transparent'} shrink-0"></div>
                         <div class="flex-1 min-w-0">
@@ -940,15 +1176,51 @@
             // Add click handlers
             noteList.querySelectorAll('.note-item').forEach(item => {
                 item.addEventListener('click', (e) => {
-                    // Don't select if clicking pin button
+                    // Don't select if clicking pin button or checkbox
                     if (e.target.closest('.pin-btn')) return;
+                    if (e.target.classList.contains('batch-checkbox')) return;
 
                     const noteId = item.dataset.id;
-                    const note = notes.find(n => n.id === noteId);
-                    if (note) {
-                        selectedNoteId = noteId;
-                        showNoteDetail(note);
+
+                    if (isBatchMode) {
+                        // Toggle selection in batch mode
+                        if (selectedNoteIds.has(noteId)) {
+                            selectedNoteIds.delete(noteId);
+                        } else {
+                            selectedNoteIds.add(noteId);
+                        }
+                        updateBatchSelection();
                         renderNoteList();
+                    } else {
+                        const note = notes.find(n => n.id === noteId);
+                        if (note) {
+                            selectedNoteId = noteId;
+                            showNoteDetail(note);
+                            renderNoteList();
+                        }
+                    }
+                });
+            });
+
+            // Add checkbox handlers for batch mode
+            noteList.querySelectorAll('.batch-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    const noteId = checkbox.dataset.id;
+                    if (checkbox.checked) {
+                        selectedNoteIds.add(noteId);
+                    } else {
+                        selectedNoteIds.delete(noteId);
+                    }
+                    updateBatchSelection();
+                    // Update item style without full re-render
+                    const item = checkbox.closest('.note-item');
+                    if (checkbox.checked) {
+                        item.classList.add('selected', 'bg-primary/10', 'border-primary/30');
+                        item.classList.remove('bg-transparent', 'border-transparent');
+                    } else {
+                        item.classList.remove('selected', 'bg-primary/10', 'border-primary/30');
+                        item.classList.add('bg-transparent', 'border-transparent');
                     }
                 });
             });
@@ -963,6 +1235,53 @@
                     }
                 });
             });
+        }
+
+        // Update batch selection UI
+        function updateBatchSelection() {
+            const count = selectedNoteIds.size;
+            document.getElementById('selectedCount').textContent = `${count} selected`;
+            document.getElementById('btnBatchExport').disabled = count === 0;
+            document.getElementById('btnBatchDelete').disabled = count === 0;
+
+            // Update select all checkbox
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const sortedNotes = [...notes].sort((a, b) => {
+                if (a.pinned && !b.pinned) return -1;
+                if (!a.pinned && b.pinned) return 1;
+                return new Date(b.updatedAt) - new Date(a.updatedAt);
+            });
+            selectAllCheckbox.checked = sortedNotes.length > 0 && count === sortedNotes.length;
+            selectAllCheckbox.indeterminate = count > 0 && count < sortedNotes.length;
+        }
+
+        // Enter batch mode
+        function enterBatchMode() {
+            isBatchMode = true;
+            selectedNoteIds.clear();
+            batchModeHeader.classList.remove('hidden');
+
+            // Update toggle button style
+            const btnBatchMode = document.getElementById('btnBatchMode');
+            btnBatchMode.classList.add('bg-primary', 'text-white');
+            btnBatchMode.classList.remove('bg-slate-100', 'dark:bg-slate-700', 'text-slate-600', 'dark:text-slate-300');
+
+            updateBatchSelection();
+            renderNoteList();
+        }
+
+        // Exit batch mode
+        function exitBatchMode() {
+            isBatchMode = false;
+            selectedNoteIds.clear();
+            batchModeHeader.classList.add('hidden');
+
+            // Restore toggle button style
+            const btnBatchMode = document.getElementById('btnBatchMode');
+            btnBatchMode.classList.remove('bg-primary', 'text-white');
+            btnBatchMode.classList.add('bg-slate-100', 'dark:bg-slate-700', 'text-slate-600', 'dark:text-slate-300');
+
+            renderNoteList();
         }
 
         // Show note detail
@@ -1112,6 +1431,61 @@
             }
         });
 
+        // Export note button and menu
+        const btnExportNote = document.getElementById('btnExportNote');
+        const exportMenu = document.getElementById('exportMenu');
+
+        // Toggle export menu
+        btnExportNote.addEventListener('click', (e) => {
+            e.stopPropagation();
+            exportMenu.classList.toggle('hidden');
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!exportMenu.classList.contains('hidden') &&
+                !exportMenu.contains(e.target) &&
+                e.target !== btnExportNote) {
+                exportMenu.classList.add('hidden');
+            }
+        });
+
+        // Handle export format selection
+        exportMenu.querySelectorAll('button[data-format]').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const format = btn.dataset.format;
+                exportMenu.classList.add('hidden');
+
+                if (!selectedNoteId || !window.noteAPI) return;
+
+                try {
+                    // Show loading state
+                    const icon = btnExportNote.querySelector('span');
+                    const originalIcon = icon.textContent;
+                    icon.textContent = 'hourglass_empty';
+
+                    const result = await window.noteAPI.exportNote(selectedNoteId, format);
+
+                    if (result.success) {
+                        // Show success
+                        icon.textContent = 'check';
+                        setTimeout(() => {
+                            icon.textContent = originalIcon;
+                        }, 1500);
+                    } else if (!result.canceled) {
+                        throw new Error(result.error || 'Export failed');
+                    } else {
+                        icon.textContent = originalIcon;
+                    }
+                } catch (error) {
+                    console.error('Export failed:', error);
+                    alert(`Export failed: ${error.message}`);
+                    btnExportNote.querySelector('span').textContent = 'download';
+                }
+            });
+        });
+
         // Pin note button
         document.getElementById('btnPinNote').addEventListener('click', async () => {
             if (selectedNoteId && window.noteAPI) {
@@ -1141,6 +1515,162 @@
         deleteModal.addEventListener('click', (e) => {
             if (e.target === deleteModal) {
                 deleteModal.classList.remove('show');
+            }
+        });
+
+        // ================= Batch Mode Logic =================
+
+        // Toggle batch mode
+        document.getElementById('btnBatchMode').addEventListener('click', () => {
+            if (isBatchMode) {
+                exitBatchMode();
+            } else {
+                enterBatchMode();
+            }
+        });
+
+        // Select all checkbox
+        document.getElementById('selectAllCheckbox').addEventListener('change', (e) => {
+            const sortedNotes = [...notes].sort((a, b) => {
+                if (a.pinned && !b.pinned) return -1;
+                if (!a.pinned && b.pinned) return 1;
+                return new Date(b.updatedAt) - new Date(a.updatedAt);
+            });
+
+            if (e.target.checked) {
+                sortedNotes.forEach(note => selectedNoteIds.add(note.id));
+            } else {
+                selectedNoteIds.clear();
+            }
+            updateBatchSelection();
+            renderNoteList();
+        });
+
+        // Open batch export modal
+        document.getElementById('btnBatchExport').addEventListener('click', () => {
+            if (selectedNoteIds.size === 0) return;
+            document.getElementById('batchExportInfo').textContent = `Export ${selectedNoteIds.size} selected notes`;
+            batchExportModal.classList.add('show');
+        });
+
+        // Cancel batch export
+        document.getElementById('btnCancelBatchExport').addEventListener('click', () => {
+            batchExportModal.classList.remove('show');
+        });
+
+        // Close batch export modal on overlay click
+        batchExportModal.addEventListener('click', (e) => {
+            if (e.target === batchExportModal) {
+                batchExportModal.classList.remove('show');
+            }
+        });
+
+        // Handle batch export format selection
+        document.querySelectorAll('.batch-format-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const format = btn.dataset.format;
+                if (!format || !window.noteAPI || selectedNoteIds.size === 0) return;
+
+                batchExportModal.classList.remove('show');
+
+                // Show loading state on the button
+                const btnBatchExport = document.getElementById('btnBatchExport');
+                const originalContent = btnBatchExport.innerHTML;
+                btnBatchExport.innerHTML = '<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>Exporting...</span>';
+                btnBatchExport.disabled = true;
+
+                try {
+                    const noteIds = Array.from(selectedNoteIds);
+                    const result = await window.noteAPI.exportNotesBatch(noteIds, format);
+
+                    if (result.success) {
+                        // Show success message
+                        if (result.errors && result.errors.length > 0) {
+                            showToast(`Exported ${result.count} notes with ${result.errors.length} errors`, 'error');
+                        } else {
+                            showToast(`Successfully exported ${result.count} notes`, 'success');
+                        }
+
+                        // Exit batch mode after successful export
+                        exitBatchMode();
+                    } else if (!result.canceled) {
+                        throw new Error(result.error || 'Export failed');
+                    }
+                } catch (error) {
+                    console.error('Batch export failed:', error);
+                    showToast(`Batch export failed: ${error.message}`, 'error');
+                } finally {
+                    btnBatchExport.innerHTML = originalContent;
+                    btnBatchExport.disabled = selectedNoteIds.size === 0;
+                }
+            });
+        });
+
+        // ================= Batch Delete Logic =================
+
+        // Open batch delete confirmation modal
+        document.getElementById('btnBatchDelete').addEventListener('click', () => {
+            if (selectedNoteIds.size === 0) return;
+            document.getElementById('batchDeleteInfo').textContent = `Are you sure you want to delete ${selectedNoteIds.size} selected notes?`;
+            batchDeleteModal.classList.add('show');
+        });
+
+        // Cancel batch delete
+        document.getElementById('btnCancelBatchDelete').addEventListener('click', () => {
+            batchDeleteModal.classList.remove('show');
+        });
+
+        // Close batch delete modal on overlay click
+        batchDeleteModal.addEventListener('click', (e) => {
+            if (e.target === batchDeleteModal) {
+                batchDeleteModal.classList.remove('show');
+            }
+        });
+
+        // Confirm batch delete
+        document.getElementById('btnConfirmBatchDelete').addEventListener('click', async () => {
+            if (!window.noteAPI || selectedNoteIds.size === 0) return;
+
+            batchDeleteModal.classList.remove('show');
+
+            // Show loading state on delete button
+            const btnBatchDelete = document.getElementById('btnBatchDelete');
+            const originalContent = btnBatchDelete.innerHTML;
+            btnBatchDelete.innerHTML = '<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>Deleting...</span>';
+            btnBatchDelete.disabled = true;
+
+            try {
+                const noteIds = Array.from(selectedNoteIds);
+                let deletedCount = 0;
+                const errors = [];
+
+                // Delete each note
+                for (const noteId of noteIds) {
+                    try {
+                        await window.noteAPI.deleteNote(noteId);
+                        deletedCount++;
+                    } catch (error) {
+                        const note = notes.find(n => n.id === noteId);
+                        errors.push({ title: note?.title || 'Unknown', error: error.message });
+                    }
+                }
+
+                // Show result message
+                if (errors.length > 0) {
+                    showToast(`Deleted ${deletedCount} notes with ${errors.length} errors`, 'error');
+                } else {
+                    showToast(`Successfully deleted ${deletedCount} notes`, 'success');
+                }
+
+                // Exit batch mode and reload notes
+                exitBatchMode();
+                await loadNotes();
+            } catch (error) {
+                console.error('Batch delete failed:', error);
+                showToast(`Batch delete failed: ${error.message}`, 'error');
+            } finally {
+                btnBatchDelete.innerHTML = originalContent;
+                btnBatchDelete.disabled = selectedNoteIds.size === 0;
             }
         });
 
@@ -1223,6 +1753,42 @@
             const chineseChars = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
             const englishWords = (text.match(/[a-zA-Z]+/g) || []).length;
             return chineseChars + englishWords;
+        }
+
+        // Show Toast Notification
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+
+            // Icons based on type
+            const icons = {
+                success: 'check_circle',
+                error: 'error',
+                info: 'info'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span class="material-symbols-outlined toast-icon">${icons[type]}</span>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            // Trigger animation
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.parentElement.removeChild(toast);
+                    }
+                }, 400); // Wait for transition
+            }, 3000);
         }
 
         // ================= Settings Logic =================
@@ -1374,13 +1940,17 @@
 
             const result = await window.noteAPI.saveSettings(newSettings);
             if (result.restartRequired) {
-                alert('Data path updated. Creating new data structure if needed. Previous data was NOT moved automatically.');
-                await loadNotes(); // Reload notes from new path
+                showToast('Settings saved. Restarting application...', 'info');
+                setTimeout(async () => {
+                    await loadNotes();
+                }, 1000);
             }
 
             closeSettings();
         });
     </script>
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
 </body>
 
 </html>

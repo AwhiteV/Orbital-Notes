@@ -38,6 +38,10 @@ contextBridge.exposeInMainWorld('noteAPI', {
     // AI News
     fetchAINews: () => ipcRenderer.invoke('fetch-ai-news'),
 
+    // Export
+    exportNote: (noteId, format) => ipcRenderer.invoke('export-note', noteId, format),
+    exportNotesBatch: (noteIds, format) => ipcRenderer.invoke('export-notes-batch', noteIds, format),
+
     // Event listeners
     onNotesUpdated: (callback) => {
         ipcRenderer.on('notes-updated', callback);

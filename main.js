@@ -5,6 +5,10 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const https = require('https');
 const http = require('http');
+const { Document, Paragraph, TextRun, HeadingLevel, Packer } = require('docx');
+const puppeteer = require('puppeteer-core');
+const { marked } = require('marked');
+const { execSync } = require('child_process');
 require('dotenv').config();
 
 // Config store to hold the data path preference
@@ -281,10 +285,10 @@ function createNoteManagerWindow() {
     const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
 
     noteManagerWindow = new BrowserWindow({
-        width: 900,
-        height: 600,
-        x: Math.floor((screenWidth - 900) / 2),
-        y: Math.floor((screenHeight - 600) / 2),
+        width: 1100,
+        height: 750,
+        x: Math.floor((screenWidth - 1100) / 2),
+        y: Math.floor((screenHeight - 750) / 2),
         frame: false,
         transparent: false,
         resizable: true,
@@ -724,4 +728,394 @@ ipcMain.handle('fetch-ai-news', async () => {
         req.write(postData);
         req.end();
     });
+});
+
+
+// ==================== Export Handlers ====================
+
+
+// Helper: Sanitize filename
+function sanitizeFilename(filename) {
+    return filename.replace(/[<>:"/\\|?*]/g, '_').substring(0, 200);
+}
+
+// Helper: Format note to Markdown
+function formatNoteToMarkdown(note) {
+    const tags = note.tags.map(t => `#${t}`).join(', ');
+    const createdDate = new Date(note.createdAt).toLocaleDateString('zh-CN');
+    const updatedDate = new Date(note.updatedAt).toLocaleDateString('zh-CN');
+
+    return `<!-- 
+Created: ${createdDate}
+Updated: ${updatedDate}
+Tags: ${tags}
+-->
+
+${note.content}
+`;
+}
+
+// Helper: Parse inline Markdown formatting (bold, italic, code, links)
+function parseInlineMarkdown(text) {
+    const runs = [];
+    let remaining = text;
+
+    // 正则匹配模式
+    const boldRegex = /\*\*(.+?)\*\*/;
+    const italicRegex = /\*(.+?)\*/;
+    const codeRegex = /`(.+?)`/;
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/;
+
+    while (remaining.length > 0) {
+        // 查找最近的匹配
+        const boldMatch = remaining.match(boldRegex);
+        const italicMatch = remaining.match(italicRegex);
+        const codeMatch = remaining.match(codeRegex);
+        const linkMatch = remaining.match(linkRegex);
+
+        // 找出最先出现的匹配
+        let firstMatch = null;
+        let firstIndex = remaining.length;
+        let matchType = null;
+
+        if (boldMatch && boldMatch.index < firstIndex) {
+            firstMatch = boldMatch;
+            firstIndex = boldMatch.index;
+            matchType = 'bold';
+        }
+        if (italicMatch && italicMatch.index < firstIndex && (!boldMatch || italicMatch.index < boldMatch.index)) {
+            // 确保不是粗体的一部分
+            if (!boldMatch || italicMatch.index !== boldMatch.index) {
+                firstMatch = italicMatch;
+                firstIndex = italicMatch.index;
+                matchType = 'italic';
+            }
+        }
+        if (codeMatch && codeMatch.index < firstIndex) {
+            firstMatch = codeMatch;
+            firstIndex = codeMatch.index;
+            matchType = 'code';
+        }
+        if (linkMatch && linkMatch.index < firstIndex) {
+            firstMatch = linkMatch;
+            firstIndex = linkMatch.index;
+            matchType = 'link';
+        }
+
+        if (!firstMatch) {
+            // 没有更多匹配，添加剩余文本
+            if (remaining) {
+                runs.push(new TextRun({ text: remaining }));
+            }
+            break;
+        }
+
+        // 添加匹配之前的普通文本
+        if (firstIndex > 0) {
+            runs.push(new TextRun({ text: remaining.substring(0, firstIndex) }));
+        }
+
+        // 添加格式化文本
+        if (matchType === 'bold') {
+            runs.push(new TextRun({ text: firstMatch[1], bold: true }));
+        } else if (matchType === 'italic') {
+            runs.push(new TextRun({ text: firstMatch[1], italics: true }));
+        } else if (matchType === 'code') {
+            runs.push(new TextRun({ text: firstMatch[1], font: 'Consolas' }));
+        } else if (matchType === 'link') {
+            runs.push(new TextRun({ text: firstMatch[1], color: '0066CC', underline: {} }));
+        }
+
+        // 更新剩余文本
+        remaining = remaining.substring(firstIndex + firstMatch[0].length);
+    }
+
+    return runs.length > 0 ? runs : [new TextRun({ text: text })];
+}
+
+// Helper: Parse Markdown to Word paragraphs (simplified)
+function parseMarkdownToParagraphs(content) {
+    const lines = content.split('\n');
+    const paragraphs = [];
+
+    for (const line of lines) {
+        if (line.startsWith('# ')) {
+            paragraphs.push(new Paragraph({ children: parseInlineMarkdown(line.substring(2)), heading: HeadingLevel.HEADING_1, }));
+        } else if (line.startsWith('## ')) {
+            paragraphs.push(new Paragraph({ children: parseInlineMarkdown(line.substring(3)), heading: HeadingLevel.HEADING_2, }));
+        } else if (line.startsWith('### ')) {
+            paragraphs.push(new Paragraph({ children: parseInlineMarkdown(line.substring(4)), heading: HeadingLevel.HEADING_3, }));
+        } else if (line.trim()) {
+            paragraphs.push(new Paragraph({ children: parseInlineMarkdown(line) }));
+        } else {
+            paragraphs.push(new Paragraph({ text: '' }));
+        }
+    }
+
+    return paragraphs;
+}
+
+// Helper: Format note to Word
+function formatNoteToWord(note) {
+    const tagText = note.tags.length > 0 ? `Tags: ${note.tags.join(', ')}` : '';
+
+    const children = [
+        new Paragraph({
+            text: note.title,
+            heading: HeadingLevel.HEADING_1,
+        }),
+    ];
+
+    if (tagText) {
+        children.push(new Paragraph({
+            children: [
+                new TextRun({
+                    text: tagText,
+                    italics: true,
+                    size: 20,
+                }),
+            ],
+        }));
+        children.push(new Paragraph({ text: '' }));
+    }
+
+    children.push(...parseMarkdownToParagraphs(note.content));
+
+    const doc = new Document({
+        sections: [{
+            properties: {},
+            children: children,
+        }],
+    });
+
+    return doc;
+}
+
+
+
+// Helper: Export note to PDF
+async function exportNoteToPDF(note, outputPath) {
+    const tagText = note.tags.length > 0 ? `Tags: ${note.tags.join(', ')}` : '';
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: "Microsoft YaHei", "Noto Sans", sans-serif;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #D0BB95;
+      margin-bottom: 0.5em;
+    }
+    .tags {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 2em;
+      font-style: italic;
+    }
+    code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: "Consolas", "Courier New", monospace;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 1em;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+    }
+    blockquote {
+      border-left: 4px solid #D0BB95;
+      padding-left: 1em;
+      margin: 1em 0;
+      color: #666;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1em 0;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #f5f5f5;
+    }
+  </style>
+</head>
+<body>
+  <h1>${note.title}</h1>
+  ${tagText ? `<p class="tags">${tagText}</p>` : ''}
+  ${marked.parse(note.content)}
+</body>
+</html>
+`;
+
+    try {
+        // Try to find Chrome or Edge
+        const possiblePaths = [
+            'C:/Program Files/Google/Chrome/Application/chrome.exe',
+            'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+            'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
+            'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+        ];
+
+        let executablePath = null;
+        for (const p of possiblePaths) {
+            if (fs.existsSync(p)) {
+                executablePath = p;
+                break;
+            }
+        }
+
+        if (!executablePath) {
+            throw new Error('Chrome or Edge not found. Please install Chrome or Edge to export PDF.');
+        }
+
+        const browser = await puppeteer.launch({
+            executablePath: executablePath,
+            headless: true,
+        });
+
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        await page.pdf({
+            path: outputPath,
+            format: 'A4',
+            margin: {
+                top: '20mm',
+                right: '20mm',
+                bottom: '20mm',
+                left: '20mm',
+            },
+        });
+
+        await browser.close();
+    } catch (error) {
+        throw new Error(`PDF export failed: ${error.message}`);
+    }
+}
+
+// Single note export
+ipcMain.handle('export-note', async (event, noteId, format) => {
+    const notes = store.get('notes') || [];
+    const note = notes.find(n => n.id === noteId);
+
+    if (!note) {
+        return { success: false, error: 'Note not found' };
+    }
+
+    const filters = {
+        markdown: [{ name: 'Markdown', extensions: ['md'] }],
+        word: [{ name: 'Word Document', extensions: ['docx'] }],
+        pdf: [{ name: 'PDF Document', extensions: ['pdf'] }]
+    };
+
+    const extensions = {
+        markdown: 'md',
+        word: 'docx',
+        pdf: 'pdf'
+    };
+
+    const result = await dialog.showSaveDialog(noteManagerWindow, {
+        title: 'Export Note',
+        defaultPath: `${sanitizeFilename(note.title)}.${extensions[format]}`,
+        filters: filters[format]
+    });
+
+    if (result.canceled) {
+        return { success: false, canceled: true };
+    }
+
+    try {
+        if (format === 'markdown') {
+            fs.writeFileSync(result.filePath, formatNoteToMarkdown(note));
+        } else if (format === 'word') {
+            const doc = formatNoteToWord(note);
+            const buffer = await Packer.toBuffer(doc);
+            fs.writeFileSync(result.filePath, buffer);
+        } else if (format === 'pdf') {
+            await exportNoteToPDF(note, result.filePath);
+        }
+
+        return { success: true, path: result.filePath };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
+// Batch export
+ipcMain.handle('export-notes-batch', async (event, noteIds, format) => {
+    const result = await dialog.showOpenDialog(noteManagerWindow, {
+        title: 'Select Export Folder',
+        properties: ['openDirectory']
+    });
+
+    if (result.canceled) {
+        return { success: false, canceled: true };
+    }
+
+    const exportPath = result.filePaths[0];
+    const notes = store.get('notes') || [];
+    const selectedNotes = notes.filter(n => noteIds.includes(n.id));
+
+    const extensions = {
+        markdown: 'md',
+        word: 'docx',
+        pdf: 'pdf'
+    };
+
+    let exportedCount = 0;
+    const errors = [];
+
+    for (const note of selectedNotes) {
+        try {
+            const baseFilename = sanitizeFilename(note.title);
+            const date = new Date(note.updatedAt).toISOString().split('T')[0];
+            let filename = `${baseFilename}_${date}.${extensions[format]}`;
+            let filePath = path.join(exportPath, filename);
+
+            // Handle duplicate filenames
+            let counter = 1;
+            while (fs.existsSync(filePath)) {
+                filename = `${baseFilename}_${date}_${counter}.${extensions[format]}`;
+                filePath = path.join(exportPath, filename);
+                counter++;
+            }
+
+            if (format === 'markdown') {
+                fs.writeFileSync(filePath, formatNoteToMarkdown(note));
+            } else if (format === 'word') {
+                const doc = formatNoteToWord(note);
+                const buffer = await Packer.toBuffer(doc);
+                fs.writeFileSync(filePath, buffer);
+            } else if (format === 'pdf') {
+                await exportNoteToPDF(note, filePath);
+            }
+
+            exportedCount++;
+        } catch (error) {
+            errors.push({ title: note.title, error: error.message });
+        }
+    }
+
+    return {
+        success: true,
+        count: exportedCount,
+        total: selectedNotes.length,
+        errors: errors
+    };
 });

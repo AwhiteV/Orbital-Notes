@@ -248,6 +248,73 @@
         #windowTitle {
             -webkit-app-region: no-drag;
         }
+
+        /* Modal animations */
+        #confirmModal {
+            transition: opacity 0.3s ease;
+        }
+
+        #confirmModalContent {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Toast Styles */
+        #toastContainer {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 10px;
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: white;
+            color: #1e293b;
+            padding: 10px 20px;
+            border-radius: 9999px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: auto;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dark .toast {
+            background: #1e293b;
+            color: #f1f5f9;
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .toast-icon {
+            font-size: 18px;
+        }
+
+        .toast.success .toast-icon {
+            color: #10b981;
+        }
+
+        .toast.error .toast-icon {
+            color: #ef4444;
+        }
+
+        .toast.info .toast-icon {
+            color: #D0BB95;
+        }
     </style>
 </head>
 
@@ -391,6 +458,33 @@
             </div>
         </div>
     </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="confirmModal"
+        class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 backdrop-blur-sm opacity-0">
+        <div class="bg-white dark:bg-[#1e293b] w-[300px] p-8 rounded-[2rem] shadow-2xl transform scale-95 opacity-0"
+            id="confirmModalContent">
+            <div class="size-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-5">
+                <span class="material-symbols-outlined text-[28px]">warning</span>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Unsaved Changes</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed text-balance">You have unsaved
+                changes. Are you sure you want to discard them?</p>
+            <div class="flex gap-3">
+                <button id="btnCancelConfirm"
+                    class="flex-1 px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    Keep
+                </button>
+                <button id="btnDiscardConfirm"
+                    class="flex-1 px-4 py-3 rounded-2xl bg-[#ef4444] text-white font-bold hover:opacity-90 transition-opacity shadow-lg shadow-red-500/20">
+                    Discard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
 
     <script>
         // State
@@ -617,10 +711,48 @@
             });
         });
 
+        // Show custom confirm dialog
+        function showConfirmDialog() {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('confirmModal');
+                const content = document.getElementById('confirmModalContent');
+                const btnCancel = document.getElementById('btnCancelConfirm');
+                const btnDiscard = document.getElementById('btnDiscardConfirm');
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+
+                // Force layout for animation
+                modal.offsetHeight;
+
+                modal.classList.add('opacity-100');
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+
+                const cleanup = (value) => {
+                    content.classList.remove('scale-100', 'opacity-100');
+                    content.classList.add('scale-95', 'opacity-0');
+                    modal.classList.remove('opacity-100');
+
+                    setTimeout(() => {
+                        modal.classList.add('hidden');
+                        modal.classList.remove('flex');
+                        resolve(value);
+                    }, 300);
+                };
+
+                btnCancel.onclick = () => cleanup(false);
+                btnDiscard.onclick = () => cleanup(true);
+                modal.onclick = (e) => {
+                    if (e.target === modal) cleanup(false);
+                };
+            });
+        }
+
         // Window controls
-        document.getElementById('btnClose').addEventListener('click', () => {
+        document.getElementById('btnClose').addEventListener('click', async () => {
             if (hasUnsavedChanges) {
-                if (confirm('You have unsaved changes. Discard them?')) {
+                if (await showConfirmDialog()) {
                     window.noteAPI?.closeWindow();
                 }
             } else {
@@ -697,8 +829,10 @@
                 setTimeout(() => {
                     icon.textContent = 'content_copy';
                 }, 1000);
+                showToast('Copied to clipboard!', 'success');
             } catch (err) {
                 console.error('Failed to copy:', err);
+                showToast('Failed to copy to clipboard', 'error');
             }
         });
 
@@ -751,6 +885,7 @@
                     currentNoteId = newNote.id;
                 }
                 updateSaveStatus(false);
+                showToast('Note saved!', 'success');
 
                 // Auto-switch to preview mode after saving
                 if (!isPreviewMode) {
@@ -758,7 +893,7 @@
                 }
             } catch (err) {
                 console.error('Failed to save note:', err);
-                alert('Failed to save note');
+                showToast('Failed to save note', 'error');
             }
         }
 
@@ -783,8 +918,10 @@
                         const imagePath = await window.noteAPI.getImagePath(fileName);
                         insertText(`\n![image](file://${imagePath.replace(/\\/g, '/')})\n`);
                         markUnsaved();
+                        showToast('Image pasted!', 'success');
                     } catch (err) {
                         console.error('Failed to save image:', err);
+                        showToast('Failed to paste image', 'error');
                     }
                 }
             }
@@ -801,6 +938,21 @@
             saveStatus.className = unsaved
                 ? 'text-xs text-orange-400 font-medium ml-2'
                 : 'text-xs text-green-400 font-medium ml-2';
+        }
+
+        // Show Toast Notification
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const icons = { success: 'check_circle', error: 'error', info: 'info' };
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span class="material-symbols-outlined toast-icon">${icons[type]}</span><span>${message}</span>`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
         // Helper functions for textarea
