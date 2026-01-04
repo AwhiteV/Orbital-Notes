@@ -34,7 +34,8 @@ function initStore() {
                 globalShortcut: 'Alt+1', // Default shortcut
                 floatingBallSize: 120, // Default size
                 difyBaseUrl: '', // Dify base URL (empty means use .env)
-                difyApiKey: '' // Dify API key (empty means use .env)
+                difyApiKey: '', // Dify API key (empty means use .env)
+                autoLaunch: false // Auto launch on system startup
             }
         }
     });
@@ -66,7 +67,7 @@ let tray = null;
 // Create system tray
 function createTray() {
     const { nativeImage } = require('electron');
-    const iconPath = path.join(__dirname, 'bot.png');
+    const iconPath = path.join(__dirname, 'icon_256.png');
 
     // Create nativeImage and resize for tray
     let icon = nativeImage.createFromPath(iconPath);
@@ -235,7 +236,7 @@ function createQuickNoteWindow(noteId = null) {
         minimizable: true,
         maximizable: false,
         alwaysOnTop: true,
-        icon: path.join(__dirname, 'bot.png'),
+        icon: path.join(__dirname, 'icon_256.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -294,7 +295,7 @@ function createNoteManagerWindow() {
         resizable: true,
         minimizable: true,
         maximizable: true,
-        icon: path.join(__dirname, 'bot.png'),
+        icon: path.join(__dirname, 'icon_256.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -362,7 +363,8 @@ ipcMain.handle('get-settings', () => {
         globalShortcut: store.get('settings.globalShortcut', 'Alt+1'),
         floatingBallSize: store.get('settings.floatingBallSize', 120),
         difyBaseUrl: store.get('settings.difyBaseUrl', ''),
-        difyApiKey: store.get('settings.difyApiKey', '')
+        difyApiKey: store.get('settings.difyApiKey', ''),
+        autoLaunch: store.get('settings.autoLaunch', false)
     };
 });
 
@@ -409,6 +411,19 @@ ipcMain.handle('save-settings', (event, newSettings) => {
             noteManagerWindow.webContents.send('notes-updated');
         }
         restartRequired = true;
+    }
+
+    // Handle Auto Launch
+    if (newSettings.autoLaunch !== undefined) {
+        const currentAutoLaunch = store.get('settings.autoLaunch', false);
+        if (newSettings.autoLaunch !== currentAutoLaunch) {
+            store.set('settings.autoLaunch', newSettings.autoLaunch);
+            app.setLoginItemSettings({
+                openAtLogin: newSettings.autoLaunch,
+                path: process.execPath,
+                args: []
+            });
+        }
     }
 
     return { success: true, restartRequired };

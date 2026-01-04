@@ -23,11 +23,12 @@
     "uuid": "^9.0.1"
   },
   "build": {
-    "appId": "com.floating-note.app",
-    "productName": "Floating Note",
+    "appId": "com.orbitalnotes.app",
+    "productName": "Orbital Notes",
     "win": {
-      "target": "nsis",
-      "icon": "assets/icon.ico"
+      "target": "portable",
+      "icon": "icon_256.png",
+      "sign": null
     },
     "nsis": {
       "oneClick": false,
@@ -36,6 +37,7 @@
     "files": [
       "main.js",
       "preload.js",
+      "icon_256.png",
       "src/**/*",
       "assets/**/*",
       "node_modules/**/*"
