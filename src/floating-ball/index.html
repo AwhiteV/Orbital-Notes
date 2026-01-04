@@ -128,7 +128,7 @@
             /* Allow some space for the list to slide out */
             width: 100%;
             height: 100%;
-            padding: 10px;
+            padding: 0;
             /* buffer */
         }
 
@@ -272,6 +272,38 @@
             background: #D0BB95;
             border-radius: 2px;
         }
+
+        /* Footer and Export Button */
+        .todo-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding-top: 5px;
+            border-top: 1px solid rgba(208, 187, 149, 0.3);
+        }
+
+        .export-btn {
+            font-size: 11px;
+            color: #fff;
+            background: #9C8865;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .export-btn:hover {
+            background: #D0BB95;
+            transform: translateY(-1px);
+        }
+
+        .export-btn:active {
+            transform: translateY(0);
+        }
     </style>
 </head>
 
@@ -370,7 +402,10 @@
                     <input type="text" class="todo-text" value="点击编辑待办" placeholder="输入待办...">
                 </li>
             </ul>
-            <div class="add-todo" id="add-todo-btn">+</div>
+            <div class="todo-footer">
+                <div class="add-todo" id="add-todo-btn" style="margin-top: 0; font-size: 20px;">+</div>
+                <button class="export-btn" id="export-todo-btn">导出为 Note</button>
+            </div>
         </div>
     </div>
 
@@ -571,6 +606,58 @@
 
         document.getElementById('add-todo-btn').addEventListener('click', () => {
             addTodoItem();
+        });
+
+        // Export to Note logic
+        document.getElementById('export-todo-btn').addEventListener('click', async () => {
+            const items = Array.from(document.querySelectorAll('.todo-item'));
+            // Filter out empty items
+            const validItems = items.filter(item => item.querySelector('.todo-text').value.trim() !== '');
+
+            if (validItems.length === 0) return;
+
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+            const title = `${dateStr} 完成的任务`;
+
+            let content = `### 任务清单 (${dateStr})\n\n`;
+            validItems.forEach(item => {
+                const text = item.querySelector('.todo-text').value;
+                const done = item.querySelector('.todo-checkbox').checked;
+                content += `${done ? '- [x]' : '- [ ]'} ${text}\n`;
+            });
+
+            if (window.noteAPI) {
+                try {
+                    await window.noteAPI.createNote({
+                        title: title,
+                        content: content,
+                        tags: ['Todo List']
+                    });
+
+                    // Clear list visually and in storage
+                    const list = document.getElementById('todo-items-list');
+                    list.innerHTML = '';
+                    saveTodos();
+
+                    // Visual feedback
+                    const btn = document.getElementById('export-todo-btn');
+                    const originalText = btn.textContent;
+                    btn.textContent = '已导出!';
+                    btn.style.background = '#86EFAC';
+                    btn.style.color = '#166534';
+
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.background = '#9C8865';
+                        btn.style.color = '#fff';
+                        // Add one empty item back after clearing
+                        addTodoItem();
+                    }, 2000);
+                } catch (e) {
+                    console.error("Export failed", e);
+                }
+            }
         });
 
         // Initialize todos

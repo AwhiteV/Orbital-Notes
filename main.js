@@ -386,10 +386,30 @@ ipcMain.handle('save-settings', (event, newSettings) => {
     if (newSettings.floatingBallSize && newSettings.floatingBallSize !== oldSize) {
         store.set('settings.floatingBallSize', newSettings.floatingBallSize);
         if (floatingBallWindow) {
-            // Toggle resizable to ensure OS allows the change, then lock it again to prevent square shadow
-            floatingBallWindow.setResizable(true);
-            floatingBallWindow.setSize(newSettings.floatingBallSize, newSettings.floatingBallSize);
-            floatingBallWindow.setResizable(false);
+            const isShrinking = newSettings.floatingBallSize < oldSize;
+
+            if (isShrinking) {
+                // Shrinking: Shrink content first to prevent clipping
+                floatingBallWindow.webContents.send('settings-updated', {
+                    floatingBallSize: newSettings.floatingBallSize
+                });
+
+                // Small delay to allow renderer to update layout
+                setTimeout(() => {
+                    floatingBallWindow.setResizable(true);
+                    floatingBallWindow.setSize(newSettings.floatingBallSize, newSettings.floatingBallSize);
+                    floatingBallWindow.setResizable(false);
+                }, 50);
+            } else {
+                // Enlarging: Enlarge window first to ensure space
+                floatingBallWindow.setResizable(true);
+                floatingBallWindow.setSize(newSettings.floatingBallSize, newSettings.floatingBallSize);
+                floatingBallWindow.setResizable(false);
+
+                floatingBallWindow.webContents.send('settings-updated', {
+                    floatingBallSize: newSettings.floatingBallSize
+                });
+            }
         }
     }
 

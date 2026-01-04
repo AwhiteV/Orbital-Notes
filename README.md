@@ -22,33 +22,28 @@
 
 ## 📸 界面展示
 
-### 🤖 Orbital 悬浮球界面
-![悬浮球](assets/bot_display.jpg)
+### 🤖 Orbital 悬浮球与 Todo List
+![悬浮球交互](assets/todolist.gif)
+
+### 🪐 笔记管理器
+![笔记管理器](assets/note_manager1.gif)
+
+### 📝 快速记录与预览
+![快速记录](assets/quick_note.gif)
+
+### ⚡ 批量导出与管理
+![批量导出](assets/batch_export_notes.gif)
+
+### ⚙️ 界面设置与主题切换
+![界面设置](assets/settings.gif)
+
+### 🏷️ 标签分类与检索
+![标签管理](assets/tags.gif)
 
 ### 📚 AI Daily News
 ![AI Daily News](assets/AI_daily_news.jpg)
 
-### 🪐 笔记管理器
-![笔记管理器](assets/note_manager.jpg)
-
-### 📝 编辑与预览界面
-#### 编辑模式
-![编辑模式](assets/quick_notes_edit.png)
-
-#### Markdown 渲染预览
-![渲染预览](assets/quick_notes_md_preview.png)
-
-### ⚙️ 设置与标签管理
-#### 常规设置
-![常规设置](assets/settings.jpg)
-
-#### 快捷键配置
-![快捷键配置](assets/settings_shortcuts.jpg)
-
-#### 标签管理
-![标签管理](assets/tag.png)
-
-#### DIFY CONFIG
+### 🔗 DIFY CONFIG
 ![dify配置](assets/dify_config.jpg)
 ---
 
@@ -77,6 +72,16 @@
 
 ## 更新日志
  
+### v1.1.4 (2026-01-04)
+- **📋 Todo List 导出功能**：
+    - **Note 转化**：支持一键将待办列表导出为正式笔记。
+    - **智能命名与打标**：导出笔记自动命名为“xxxx年xx月xx日 完成的任务”，并自动添加 `#Todo List` 标签。
+    - **自动闭环**：导出完成后自动清空列表，方便开启下一阶段的任务。
+- **📏 悬浮球尺寸优化**：
+    - **丝滑缩放**：优化了调整悬浮球大小时的渲染逻辑，解决缩小窗口时出现的画面裁剪与闪烁感。
+    - **零重叠遮罩**：修复了在小尺寸（如 40px）下内容显示不全的“遮罩”异常，确保全尺寸完美显示。
+- **🛠️ 样式微调**：移除了冗余的内边距，提升了小尺寸运行下的视觉容错度。
+
 ### v1.1.3 (2026-01-04)
 - **🎨 悬浮球配色自定义**：
     - **双主题支持**：新增“樱花粉”主题方案，满足个性化审美。
