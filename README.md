@@ -49,20 +49,16 @@
 
 ## 🚀 快速开始
 
-### 运行环境
-- Node.js (建议 v16+)
-- npm 或 yarn
+### 📦 启动方式
+1. **直接启动（推荐）**：
+   下载并运行 `Orbital Notes 1.0.0.exe` 即可一键开启应用。
+2. **开发者模式**：
+   - 克隆或下载本项目。
+   - 在根目录执行依赖安装：`npm install`。
+   - 启动应用：`npm start`。
 
-### 安装步骤
-1. 克隆或下载本项目
-2. 在根目录执行安装依赖：
-   ```bash
-   npm install
-   ```
-3. 启动应用：
-   ```bash
-   npm start
-   ```
+### 🤖 Dify 工作流配置
+如果您需要使用 AI Daily News 功能，请导入 `dify_workflow` 目录下的 `Ai_news.yml` 工作流文件到您的 Dify 平台。
 
 ## 🛠️ 快捷键指南
 
