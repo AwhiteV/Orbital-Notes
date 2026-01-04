@@ -6,6 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Floating Ball</title>
     <style>
+        /* Theme Variables */
+        :root {
+            /* Classic Theme (Default) */
+            --theme-body-light: #EBE3D3;
+            --theme-body-mid: #D0BB95;
+            --theme-body-dark: #9C8865;
+            --theme-ears: #9C8865;
+            --theme-antenna-stroke: #9C8865;
+            --theme-antenna-fill: #D0BB95;
+        }
+
+        [data-theme="sakura"] {
+            /* Sakura Pink Theme */
+            --theme-body-light: #FFE4E8;
+            --theme-body-mid: #FFC0CB;
+            --theme-body-dark: #FFB6C1;
+            --theme-ears: #FFB6C1;
+            --theme-antenna-stroke: #FFB6C1;
+            --theme-antenna-fill: #FFC0CB;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -97,83 +118,260 @@
         #robot-container.clicked {
             transform: scale(0.9);
         }
+
+        /* --- New Features Styles --- */
+
+        /* Wrapper to hold ball and list */
+        #main-wrapper {
+            display: flex;
+            align-items: flex-start;
+            /* Allow some space for the list to slide out */
+            width: 100%;
+            height: 100%;
+            padding: 10px;
+            /* buffer */
+        }
+
+        /* Rotation */
+        /* Updated Robot Container Layout */
+        #robot-container {
+            /* Fix size to prevent growing */
+            flex: 0 0 auto;
+            width: var(--ball-size, 120px);
+            height: var(--ball-size, 120px);
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            transition: transform 0.1s;
+        }
+
+        #robot-container.rotated {
+            /* Combine rotation with the full width layout */
+            transform: rotate(-45deg);
+            transition: transform 0.3s ease-out;
+        }
+
+        /* Smile Animation */
+        /* We will change the path d attribute using CSS or JS. 
+           CSS cannot animate 'd' property easily in all browsers without specific interpolation.
+           We'll use a class to toggle opacity of mouth variants or use SVGs.
+           Simpler: Switch the path 'd' via JS or have two mouths and toggle visibility.
+        */
+        .mouth-normal {
+            opacity: 1;
+            transition: opacity 0.2s;
+        }
+
+        .mouth-smile {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        #robot-container.smiling .mouth-normal {
+            opacity: 0;
+        }
+
+        #robot-container.smiling .mouth-smile {
+            opacity: 1;
+        }
+
+        /* Todo List styles */
+        #todo-list {
+            flex: 1;
+            margin-left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: all 0.3s ease-out;
+            pointer-events: none;
+            /* Interact only when visible */
+            display: flex;
+            flex-direction: column;
+            height: 280px;
+            /* Fits within the expanded window height 300 */
+            width: 220px;
+        }
+
+        #main-wrapper.expanded #todo-list {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
+
+        /* Todo Items */
+        .todo-header {
+            font-size: 16px;
+            font-weight: bold;
+            color: #4A4238;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #D0BB95;
+            padding-bottom: 5px;
+        }
+
+        .todo-items {
+            flex: 1;
+            overflow-y: auto;
+            list-style: none;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #2D2822;
+        }
+
+        .todo-checkbox {
+            margin-right: 8px;
+            accent-color: #9C8865;
+            cursor: pointer;
+        }
+
+        .todo-text {
+            flex: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-family: inherit;
+            color: inherit;
+            border-bottom: 1px solid transparent;
+        }
+
+        .todo-text:focus {
+            border-bottom: 1px solid #D0BB95;
+        }
+
+        .todo-text.completed {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        /* Add new item placeholder */
+        .add-todo {
+            margin-top: 10px;
+            font-size: 24px;
+            color: #9C8865;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .add-todo:hover {
+            color: #D0BB95;
+        }
+
+        /* Scrollbar */
+        .todo-items::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .todo-items::-webkit-scrollbar-thumb {
+            background: #D0BB95;
+            border-radius: 2px;
+        }
     </style>
 </head>
 
 <body>
-    <div id="robot-container" class="floating">
-        <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-            <defs>
-                <!-- Body gradient -->
-                <radialGradient id="bodyGradient" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
-                    gradientTransform="translate(70 70) rotate(51.3402) scale(166.433)">
-                    <stop stop-color="#EBE3D3" />
-                    <stop offset="0.46" stop-color="#D0BB95" />
-                    <stop offset="1" stop-color="#9C8865" />
-                </radialGradient>
+    <div id="main-wrapper">
+        <div id="robot-container" class="floating">
+            <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid meet">
+                <defs>
+                    <!-- Body gradient -->
+                    <radialGradient id="bodyGradient" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
+                        gradientTransform="translate(70 70) rotate(51.3402) scale(166.433)">
+                        <stop stop-color="var(--theme-body-light)" />
+                        <stop offset="0.46" stop-color="var(--theme-body-mid)" />
+                        <stop offset="1" stop-color="var(--theme-body-dark)" />
+                    </radialGradient>
 
-                <!-- Face gradient -->
-                <linearGradient id="faceGradient" x1="100" y1="65" x2="100" y2="135" gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#4A4238" />
-                    <stop offset="1" stop-color="#2D2822" />
-                </linearGradient>
+                    <!-- Face gradient -->
+                    <linearGradient id="faceGradient" x1="100" y1="65" x2="100" y2="135" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#4A4238" />
+                        <stop offset="1" stop-color="#2D2822" />
+                    </linearGradient>
 
-                <!-- Eye glow effect -->
-                <filter id="glow">
-                    <feGaussianBlur stdDeviation="1.5" result="coloredBlur" />
-                    <feMerge>
-                        <feMergeNode in="coloredBlur" />
-                        <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                </filter>
-            </defs>
+                    <!-- Eye glow effect -->
+                    <filter id="glow">
+                        <feGaussianBlur stdDeviation="1.5" result="coloredBlur" />
+                        <feMerge>
+                            <feMergeNode in="coloredBlur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                </defs>
 
-            <!-- Robot body group -->
-            <g class="robot-body">
-                <!-- Antenna -->
-                <g class="antenna-group">
-                    <line x1="100" y1="40" x2="100" y2="20" stroke="#9C8865" stroke-width="4" stroke-linecap="round" />
-                    <circle cx="100" cy="18" r="6" fill="#D0BB95" stroke="#9C8865" stroke-width="2" />
-                    <!-- Antenna signal light -->
-                    <circle cx="100" cy="18" r="2" fill="#86EFAC">
-                        <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" />
-                    </circle>
+                <!-- Robot body group -->
+                <g class="robot-body">
+                    <!-- Antenna -->
+                    <g class="antenna-group">
+                        <line x1="100" y1="40" x2="100" y2="20" stroke="var(--theme-antenna-stroke)" stroke-width="4"
+                            stroke-linecap="round" />
+                        <circle cx="100" cy="18" r="6" fill="var(--theme-antenna-fill)"
+                            stroke="var(--theme-antenna-stroke)" stroke-width="2" />
+                        <!-- Antenna signal light -->
+                        <circle cx="100" cy="18" r="2" fill="#86EFAC">
+                            <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" />
+                        </circle>
+                    </g>
+
+                    <!-- Ears/Hands -->
+                    <circle cx="25" cy="100" r="15" fill="var(--theme-ears)" />
+                    <circle cx="175" cy="100" r="15" fill="var(--theme-ears)" />
+
+                    <!-- Main body -->
+                    <circle cx="100" cy="100" r="80" fill="url(#bodyGradient)" />
+
+                    <!-- Internal highlight -->
+                    <ellipse cx="100" cy="100" rx="75" ry="75" fill="white" fill-opacity="0.05" />
+                    <path d="M60 50 Q100 30 140 50" stroke="white" stroke-width="3" stroke-linecap="round"
+                        stroke-opacity="0.3" fill="none" />
+
+                    <!-- Face screen area -->
+                    <rect x="50" y="75" width="100" height="60" rx="25" fill="url(#faceGradient)"
+                        stroke="var(--theme-body-dark)" stroke-width="2" />
+
+                    <!-- Eyes -->
+                    <g class="robot-eyes">
+                        <circle cx="80" cy="105" r="8" fill="#86EFAC" filter="url(#glow)" />
+                        <circle cx="120" cy="105" r="8" fill="#86EFAC" filter="url(#glow)" />
+                        <!-- Eye highlights -->
+                        <circle cx="83" cy="102" r="2.5" fill="white" />
+                        <circle cx="123" cy="102" r="2.5" fill="white" />
+                    </g>
+
+                    <!-- Blush -->
+                    <ellipse cx="65" cy="115" rx="5" ry="3" fill="#FF8ba7" fill-opacity="0.6" />
+                    <ellipse cx="135" cy="115" rx="5" ry="3" fill="#FF8ba7" fill-opacity="0.6" />
+
+                    <!-- Mouth -->
+                    <g class="mouth-group">
+                        <!-- Normal Mouth -->
+                        <path class="mouth-normal" d="M95 112 Q100 115 105 112" stroke="#86EFAC" stroke-width="2"
+                            stroke-linecap="round" stroke-opacity="0.5" fill="none" />
+                        <!-- Smile Mouth (larger curve) -->
+                        <path class="mouth-smile" d="M85 110 Q100 125 115 110" stroke="#86EFAC" stroke-width="3"
+                            stroke-linecap="round" stroke-opacity="0.8" fill="none" />
+                    </g>
                 </g>
+            </svg>
+        </div>
 
-                <!-- Ears/Hands -->
-                <circle cx="25" cy="100" r="15" fill="#9C8865" />
-                <circle cx="175" cy="100" r="15" fill="#9C8865" />
-
-                <!-- Main body -->
-                <circle cx="100" cy="100" r="80" fill="url(#bodyGradient)" />
-
-                <!-- Internal highlight -->
-                <ellipse cx="100" cy="100" rx="75" ry="75" fill="white" fill-opacity="0.05" />
-                <path d="M60 50 Q100 30 140 50" stroke="white" stroke-width="3" stroke-linecap="round"
-                    stroke-opacity="0.3" fill="none" />
-
-                <!-- Face screen area -->
-                <rect x="50" y="75" width="100" height="60" rx="25" fill="url(#faceGradient)" stroke="#9C8865"
-                    stroke-width="2" />
-
-                <!-- Eyes -->
-                <g class="robot-eyes">
-                    <circle cx="80" cy="105" r="8" fill="#86EFAC" filter="url(#glow)" />
-                    <circle cx="120" cy="105" r="8" fill="#86EFAC" filter="url(#glow)" />
-                    <!-- Eye highlights -->
-                    <circle cx="83" cy="102" r="2.5" fill="white" />
-                    <circle cx="123" cy="102" r="2.5" fill="white" />
-                </g>
-
-                <!-- Blush -->
-                <ellipse cx="65" cy="115" rx="5" ry="3" fill="#FF8ba7" fill-opacity="0.6" />
-                <ellipse cx="135" cy="115" rx="5" ry="3" fill="#FF8ba7" fill-opacity="0.6" />
-
-                <!-- Mouth -->
-                <path d="M95 112 Q100 115 105 112" stroke="#86EFAC" stroke-width="2" stroke-linecap="round"
-                    stroke-opacity="0.5" fill="none" />
-            </g>
-        </svg>
+        <!-- Todo List Panel -->
+        <div id="todo-list">
+            <div class="todo-header">Todo List</div>
+            <ul class="todo-items" id="todo-items-list">
+                <li class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <input type="text" class="todo-text" value="点击编辑待办" placeholder="输入待办...">
+                </li>
+            </ul>
+            <div class="add-todo" id="add-todo-btn">+</div>
+        </div>
     </div>
 
     <script>
@@ -183,16 +381,26 @@
         let startScreenX, startScreenY; // 拖拽开始时的屏幕坐标，用于判断是否仅仅是点击
         let hasMoved = false;
 
-        // Initialize size from settings
+        // Initialize size and theme from settings
         if (window.noteAPI) {
             window.noteAPI.getSettings().then(settings => {
                 const size = settings.floatingBallSize || 120;
-                // Window size is already set by main.js, but we ensure content scale
+                // Set CSS variable for size
+                robot.style.setProperty('--ball-size', `${size}px`);
+
+                // Apply theme
+                const theme = settings.floatingBallTheme || 'classic';
+                document.documentElement.setAttribute('data-theme', theme);
             });
 
             window.noteAPI.onSettingsUpdated((settings) => {
                 if (settings.floatingBallSize) {
                     console.log('Size updated:', settings.floatingBallSize);
+                    robot.style.setProperty('--ball-size', `${settings.floatingBallSize}px`);
+                }
+                if (settings.floatingBallTheme) {
+                    console.log('Theme updated:', settings.floatingBallTheme);
+                    document.documentElement.setAttribute('data-theme', settings.floatingBallTheme);
                 }
             });
         }
@@ -301,6 +509,124 @@
 
         window.addEventListener('mouseup', onMouseUp);
         window.addEventListener('touchend', onMouseUp);
+
+        // --- New Interaction Logic ---
+        const wrapper = document.getElementById('main-wrapper');
+        const todoList = document.getElementById('todo-list');
+        const robotContainer = document.getElementById('robot-container');
+        let hoverTimeout;
+
+        // Load saved todos
+        function loadTodos() {
+            try {
+                const todos = JSON.parse(localStorage.getItem('floating_todos') || '[]');
+                const list = document.getElementById('todo-items-list');
+                list.innerHTML = '';
+                if (todos.length === 0) {
+                    addTodoItem('任务 1', false);
+                } else {
+                    todos.forEach(t => addTodoItem(t.text, t.done));
+                }
+            } catch (e) {
+                console.error("Failed to load todos", e);
+                addTodoItem('任务 1', false);
+            }
+        }
+
+        function saveTodos() {
+            const items = Array.from(document.querySelectorAll('.todo-item'));
+            const data = items.map(item => ({
+                text: item.querySelector('.todo-text').value,
+                done: item.querySelector('.todo-checkbox').checked
+            }));
+            localStorage.setItem('floating_todos', JSON.stringify(data));
+        }
+
+        function addTodoItem(text = '', done = false) {
+            const list = document.getElementById('todo-items-list');
+            const li = document.createElement('li');
+            li.className = 'todo-item';
+            li.innerHTML = `
+                <input type="checkbox" class="todo-checkbox" ${done ? 'checked' : ''}>
+                <input type="text" class="todo-text" value="${text}" placeholder="写点什么...">
+            `;
+
+            // Re-bind events for new elements
+            const checkbox = li.querySelector('.todo-checkbox');
+            const input = li.querySelector('.todo-text');
+
+            if (done) input.classList.add('completed');
+
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) input.classList.add('completed');
+                else input.classList.remove('completed');
+                saveTodos();
+            });
+
+            input.addEventListener('input', saveTodos);
+            input.addEventListener('mousedown', (e) => e.stopPropagation()); // Prevent drag start
+
+            list.appendChild(li);
+        }
+
+        document.getElementById('add-todo-btn').addEventListener('click', () => {
+            addTodoItem();
+        });
+
+        // Initialize todos
+        loadTodos();
+
+        // Hover logic
+        let isExpanded = false;
+        let expandTimeout = null;
+        let shrinkTimeout = null;
+
+        wrapper.addEventListener('mouseenter', () => {
+            if (isDragging) return;
+
+            // If we are shrinking, cancel it
+            if (shrinkTimeout) {
+                clearTimeout(shrinkTimeout);
+                shrinkTimeout = null;
+            }
+
+            if (!isExpanded) {
+                // Wait 1 second before trigger
+                expandTimeout = setTimeout(() => {
+                    if (window.noteAPI) {
+                        isExpanded = true;
+                        wrapper.classList.add('expanded');
+                        robotContainer.classList.add('rotated');
+                        robotContainer.classList.add('smiling');
+                        window.noteAPI.expandFloatingBall();
+                    }
+                    expandTimeout = null;
+                }, 1000);
+            }
+        });
+
+        wrapper.addEventListener('mouseleave', () => {
+            // If we were waiting to expand, cancel it
+            if (expandTimeout) {
+                clearTimeout(expandTimeout);
+                expandTimeout = null;
+            }
+
+            if (isExpanded) {
+                // Short delay to avoid accidental flickering
+                shrinkTimeout = setTimeout(() => {
+                    if (window.noteAPI) {
+                        isExpanded = false;
+                        wrapper.classList.remove('expanded');
+                        robotContainer.classList.remove('rotated');
+                        robotContainer.classList.remove('smiling');
+                        window.noteAPI.shrinkFloatingBall();
+                    }
+                    shrinkTimeout = null;
+                }, 300);
+            }
+        });
+
     </script>
 </body>
 

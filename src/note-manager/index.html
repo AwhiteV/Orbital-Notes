@@ -784,6 +784,35 @@
                     </div>
 
                     <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                            Floating Ball Theme
+                        </label>
+                        <div class="grid grid-cols-2 gap-3" id="themePicker">
+                            <button type="button" data-theme="classic"
+                                class="theme-option flex items-center gap-3 p-3 rounded-xl border-2 transition-all hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700">
+                                <div class="w-10 h-10 rounded-full shadow-md flex-shrink-0"
+                                    style="background: radial-gradient(circle at 35% 35%, #EBE3D3 0%, #D0BB95 46%, #9C8865 100%)">
+                                </div>
+                                <div class="text-left overflow-hidden">
+                                    <div class="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">经典棕色
+                                    </div>
+                                    <div class="text-[10px] text-slate-400">Classic Theme</div>
+                                </div>
+                            </button>
+                            <button type="button" data-theme="sakura"
+                                class="theme-option flex items-center gap-3 p-3 rounded-xl border-2 transition-all hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700">
+                                <div class="w-10 h-10 rounded-full shadow-md flex-shrink-0"
+                                    style="background: radial-gradient(circle at 35% 35%, #FFE4E8 0%, #FFC0CB 46%, #FFB6C1 100%)">
+                                </div>
+                                <div class="text-left overflow-hidden">
+                                    <div class="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">樱花粉</div>
+                                    <div class="text-[10px] text-slate-400">Sakura Pink</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Auto
@@ -1817,6 +1846,7 @@
         const tabContents = document.querySelectorAll('.tab-content');
 
         let currentSettings = { dataPath: '', globalShortcut: '' };
+        let selectedTheme = 'classic';
 
         // Open Settings
         if (btnSettings) {
@@ -1855,6 +1885,26 @@
             });
         });
 
+        // Initialize Theme Picker Logic
+        document.querySelectorAll('.theme-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                selectedTheme = btn.dataset.theme;
+                updateThemePickerUI();
+            });
+        });
+
+        function updateThemePickerUI() {
+            document.querySelectorAll('.theme-option').forEach(btn => {
+                if (btn.dataset.theme === selectedTheme) {
+                    btn.classList.add('border-primary', 'bg-primary/5', 'dark:bg-primary/10');
+                    btn.classList.remove('border-slate-200', 'dark:border-slate-700');
+                } else {
+                    btn.classList.remove('border-primary', 'bg-primary/5', 'dark:bg-primary/10');
+                    btn.classList.add('border-slate-200', 'dark:border-slate-700');
+                }
+            });
+        }
+
         // Load Settings
         async function loadSettings() {
             if (!window.noteAPI) return;
@@ -1865,6 +1915,10 @@
             document.getElementById('dataPathInput').value = settings.dataPath;
             document.getElementById('sizeInput').value = settings.floatingBallSize || 120;
             document.getElementById('sizeValue').textContent = settings.floatingBallSize || 120;
+
+            selectedTheme = settings.floatingBallTheme || 'classic';
+            updateThemePickerUI();
+
             document.getElementById('autoLaunchCheckbox').checked = settings.autoLaunch || false;
 
             // Populate Dify Configuration
@@ -1952,6 +2006,7 @@
                 dataPath: newPath,
                 globalShortcut: newShortcut,
                 floatingBallSize: newSize,
+                floatingBallTheme: selectedTheme,
                 difyBaseUrl: newDifyBaseUrl,
                 difyApiKey: newDifyApiKey,
                 autoLaunch: newAutoLaunch

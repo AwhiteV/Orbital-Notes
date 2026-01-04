@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('noteAPI', {
     toggleMaximize: () => ipcRenderer.send('toggle-maximize'),
     moveFloatingBall: (x, y) => ipcRenderer.send('move-floating-ball', { x, y }),
     getFloatingBallPosition: () => ipcRenderer.invoke('get-floating-ball-position'),
+    expandFloatingBall: () => ipcRenderer.invoke('expand-floating-ball'),
+    shrinkFloatingBall: () => ipcRenderer.invoke('shrink-floating-ball'),
     openExternal: (url) => ipcRenderer.send('open-external', url),
 
     // Notes CRUD

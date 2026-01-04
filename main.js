@@ -17,8 +17,16 @@ const configStore = new Store({
     // We stick to default user data for the config itself
 });
 
-// Determine data path
-const defaultDataPath = path.join(__dirname, 'data');
+// Determine data path - use userData path for packaged app
+const getUserDataPath = () => {
+    if (app.isPackaged) {
+        return path.join(app.getPath('userData'), 'data');
+    } else {
+        return path.join(__dirname, 'data');
+    }
+};
+
+const defaultDataPath = getUserDataPath();
 let currentDataPath = configStore.get('dataPath', defaultDataPath);
 let currentImagesPath;
 
@@ -35,7 +43,8 @@ function initStore() {
                 floatingBallSize: 120, // Default size
                 difyBaseUrl: '', // Dify base URL (empty means use .env)
                 difyApiKey: '', // Dify API key (empty means use .env)
-                autoLaunch: false // Auto launch on system startup
+                autoLaunch: false, // Auto launch on system startup
+                floatingBallTheme: 'classic' // Default theme
             }
         }
     });
@@ -362,6 +371,7 @@ ipcMain.handle('get-settings', () => {
         dataPath: currentDataPath,
         globalShortcut: store.get('settings.globalShortcut', 'Alt+1'),
         floatingBallSize: store.get('settings.floatingBallSize', 120),
+        floatingBallTheme: store.get('settings.floatingBallTheme', 'classic'),
         difyBaseUrl: store.get('settings.difyBaseUrl', ''),
         difyApiKey: store.get('settings.difyApiKey', ''),
         autoLaunch: store.get('settings.autoLaunch', false)
@@ -422,6 +432,17 @@ ipcMain.handle('save-settings', (event, newSettings) => {
                 openAtLogin: newSettings.autoLaunch,
                 path: process.execPath,
                 args: []
+            });
+        }
+    }
+
+    // Handle Floating Ball Theme
+    if (newSettings.floatingBallTheme) {
+        store.set('settings.floatingBallTheme', newSettings.floatingBallTheme);
+        // Notify floating ball to update theme immediately
+        if (floatingBallWindow) {
+            floatingBallWindow.webContents.send('settings-updated', {
+                floatingBallTheme: newSettings.floatingBallTheme
             });
         }
     }
@@ -494,6 +515,9 @@ ipcMain.on('move-floating-ball', (event, data) => {
     }
 });
 
+// State for floating ball expansion
+let floatingBallOriginalPos = null;
+
 // Get floating ball window position
 ipcMain.handle('get-floating-ball-position', () => {
     if (floatingBallWindow) {
@@ -501,6 +525,45 @@ ipcMain.handle('get-floating-ball-position', () => {
         return { x, y };
     }
     return null;
+});
+
+// Expand/Shrink floating ball for Todo List
+ipcMain.handle('expand-floating-ball', () => {
+    if (floatingBallWindow) {
+        const size = store.get('settings.floatingBallSize', 120);
+        const expandedWidth = size + 250;
+        const expandedHeight = Math.max(size, 300);
+
+        const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
+        const { width: screenWidth, height: screenHeight, x: screenX, y: screenY } = display.workArea;
+
+        let [x, y] = floatingBallWindow.getPosition();
+
+        // Adjust position if expanding goes off-screen
+        if (x + expandedWidth > screenX + screenWidth) {
+            x = (screenX + screenWidth) - expandedWidth;
+        }
+        if (y + expandedHeight > screenY + screenHeight) {
+            y = (screenY + screenHeight) - expandedHeight;
+        }
+
+        floatingBallWindow.setResizable(true);
+        floatingBallWindow.setBounds({ x, y, width: expandedWidth, height: expandedHeight });
+        floatingBallWindow.setResizable(false);
+    }
+});
+
+ipcMain.handle('shrink-floating-ball', () => {
+    if (floatingBallWindow) {
+        const size = store.get('settings.floatingBallSize', 120);
+
+        // Just resize at current position, don't force jump back
+        const [x, y] = floatingBallWindow.getPosition();
+
+        floatingBallWindow.setResizable(true);
+        floatingBallWindow.setBounds({ x, y, width: size, height: size });
+        floatingBallWindow.setResizable(false);
+    }
 });
 
 // Notes CRUD operations
