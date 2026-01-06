@@ -19,7 +19,6 @@
     "dotenv": "^17.2.3",
     "electron-store": "^8.1.0",
     "marked": "^11.2.0",
-    "puppeteer-core": "^24.34.0",
     "uuid": "^9.0.1"
   },
   "build": {
@@ -27,7 +26,7 @@
     "productName": "Orbital Notes",
     "win": {
       "target": "portable",
-      "icon": "icon_256.png",
+      "icon": "logo.png",
       "sign": null
     },
     "nsis": {
@@ -37,7 +36,7 @@
     "files": [
       "main.js",
       "preload.js",
-      "icon_256.png",
+      "logo.png",
       "src/**/*",
       "assets/**/*",
       "node_modules/**/*"

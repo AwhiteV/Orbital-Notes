@@ -56,5 +56,20 @@ contextBridge.exposeInMainWorld('noteAPI', {
     onSettingsUpdated: (callback) => {
         ipcRenderer.on('settings-updated', (event, settings) => callback(settings));
         return () => ipcRenderer.removeListener('settings-updated', callback);
+    },
+
+    // Screenshot & Pin
+    onCaptureScreen: (callback) => {
+        ipcRenderer.on('capture-screen', (event, sourceId, displayInfo) => callback(sourceId, displayInfo));
+        return () => ipcRenderer.removeListener('capture-screen', callback);
+    },
+    closeScreenshot: () => ipcRenderer.send('close-screenshot'),
+    pinImage: (dataUrl) => ipcRenderer.send('pin-image', dataUrl),
+    copyToClipboard: (dataUrl) => ipcRenderer.send('copy-to-clipboard', dataUrl),
+
+    // Pin Window
+    onSetImage: (callback) => {
+        ipcRenderer.on('set-image', (event, dataUrl) => callback(dataUrl));
+        return () => ipcRenderer.removeListener('set-image', callback);
     }
 });

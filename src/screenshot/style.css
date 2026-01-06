@@ -1,0 +1,72 @@
+body,
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+    /* Black background for reliable rendering */
+    overflow: hidden;
+    user-select: none;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+#screenshot-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    display: block;
+}
+
+.toolbar {
+    position: absolute;
+    background: rgba(30, 30, 30, 0.95);
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    border: 1px solid #555;
+}
+
+.toolbar.hidden {
+    display: none;
+}
+
+.toolbar button {
+    background: #444;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.toolbar button:hover {
+    background: #666;
+}
+
+.size-info {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 999;
+    font-weight: 500;
+}
+
+.size-info.hidden {
+    display: none;
+}

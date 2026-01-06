@@ -839,6 +839,20 @@
                             class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent px-3 py-2">
                         <p class="text-xs text-slate-400 mt-1">Default: Alt+1</p>
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Screenshot
+                            (Capture Screen)</label>
+                        <input id="screenshotShortcutInput" type="text" placeholder="Click to record (e.g. F1)"
+                            class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent px-3 py-2">
+                        <p class="text-xs text-slate-400 mt-1">Default: F1</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Pin Clipboard
+                            Image</label>
+                        <input id="pinShortcutInput" type="text" placeholder="Click to record (e.g. F3)"
+                            class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent px-3 py-2">
+                        <p class="text-xs text-slate-400 mt-1">Default: F3</p>
+                    </div>
                 </div>
 
                 <!-- Tags Tab -->
@@ -1927,6 +1941,8 @@
 
             // Populate Shortcuts
             document.getElementById('shortcutInput').value = settings.globalShortcut || 'Alt+1';
+            document.getElementById('screenshotShortcutInput').value = settings.screenshotShortcut || 'F1';
+            document.getElementById('pinShortcutInput').value = settings.pinShortcut || 'F3';
 
             // Populate Tags
             renderSettingsTags();
@@ -1956,24 +1972,34 @@
 
         // Record Shortcut
         const shortcutInput = document.getElementById('shortcutInput');
-        shortcutInput.addEventListener('keydown', (e) => {
-            e.preventDefault();
-            const keys = [];
-            if (e.ctrlKey) keys.push('Ctrl');
-            if (e.metaKey) keys.push('Super');
-            if (e.altKey) keys.push('Alt');
-            if (e.shiftKey) keys.push('Shift');
+        const screenshotShortcutInput = document.getElementById('screenshotShortcutInput');
+        const pinShortcutInput = document.getElementById('pinShortcutInput');
 
-            let key = e.key;
-            if (key === 'Control' || key === 'Alt' || key === 'Shift' || key === 'Meta') return;
+        function setupShortcutRecorder(inputEl) {
+            inputEl.addEventListener('keydown', (e) => {
+                e.preventDefault();
+                const keys = [];
+                if (e.ctrlKey) keys.push('Ctrl');
+                if (e.metaKey) keys.push('Super');
+                if (e.altKey) keys.push('Alt');
+                if (e.shiftKey) keys.push('Shift');
 
-            if (key.match(/^[0-9]$/)) key = key;
-            else if (key.length === 1) key = key.toUpperCase();
+                let key = e.key;
+                if (key === 'Control' || key === 'Alt' || key === 'Shift' || key === 'Meta') return;
 
-            keys.push(key);
-            const shortcut = keys.join('+');
-            shortcutInput.value = shortcut;
-        });
+                if (key.match(/^[0-9]$/)) key = key;
+                else if (key.match(/^F[0-9]+$/)) key = key; // Allow F1-F12
+                else if (key.length === 1) key = key.toUpperCase();
+
+                keys.push(key);
+                const shortcut = keys.join('+');
+                inputEl.value = shortcut;
+            });
+        }
+
+        setupShortcutRecorder(shortcutInput);
+        setupShortcutRecorder(screenshotShortcutInput);
+        setupShortcutRecorder(pinShortcutInput);
 
         // Size Input Live Preview
         document.getElementById('sizeInput').addEventListener('input', (e) => {
@@ -2005,6 +2031,8 @@
             const newSettings = {
                 dataPath: newPath,
                 globalShortcut: newShortcut,
+                screenshotShortcut: document.getElementById('screenshotShortcutInput').value,
+                pinShortcut: document.getElementById('pinShortcutInput').value,
                 floatingBallSize: newSize,
                 floatingBallTheme: selectedTheme,
                 difyBaseUrl: newDifyBaseUrl,

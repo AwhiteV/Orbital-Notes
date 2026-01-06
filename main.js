@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen, globalShortcut, dialog, shell, Tray, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, globalShortcut, dialog, shell, Tray, Menu, desktopCapturer, clipboard } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 const { v4: uuidv4 } = require('uuid');
@@ -6,7 +6,7 @@ const fs = require('fs');
 const https = require('https');
 const http = require('http');
 const { Document, Paragraph, TextRun, HeadingLevel, Packer } = require('docx');
-const puppeteer = require('puppeteer-core');
+// PDF export now uses Electron's built-in printToPDF (no external dependency needed)
 const { marked } = require('marked');
 const { execSync } = require('child_process');
 require('dotenv').config();
@@ -40,6 +40,8 @@ function initStore() {
             notes: [],
             settings: {
                 globalShortcut: 'Alt+1', // Default shortcut
+                screenshotShortcut: 'F1', // Screenshot shortcut
+                pinShortcut: 'F3', // Pin clipboard shortcut
                 floatingBallSize: 120, // Default size
                 difyBaseUrl: '', // Dify base URL (empty means use .env)
                 difyApiKey: '', // Dify API key (empty means use .env)
@@ -72,11 +74,13 @@ let floatingBallWindow = null;
 let quickNoteWindow = null;
 let noteManagerWindow = null;
 let tray = null;
+let screenshotWindow = null;
+let pinWindows = []; // Array to hold multiple pin windows
 
 // Create system tray
 function createTray() {
     const { nativeImage } = require('electron');
-    const iconPath = path.join(__dirname, 'icon_256.png');
+    const iconPath = path.join(__dirname, 'logo.png');
 
     // Create nativeImage and resize for tray
     let icon = nativeImage.createFromPath(iconPath);
@@ -196,6 +200,34 @@ function registerGlobalShortcut() {
     globalShortcut.unregisterAll();
 
     const shortcut = store.get('settings.globalShortcut', 'Alt+1');
+    const screenshotShortcut = store.get('settings.screenshotShortcut', 'F1');
+    const pinShortcut = store.get('settings.pinShortcut', 'F3');
+
+    // Screenshot shortcut
+    if (screenshotShortcut) {
+        try {
+            globalShortcut.register(screenshotShortcut, () => {
+                createScreenshotWindow();
+            });
+        } catch (e) {
+            console.error('Error registering screenshot shortcut:', e);
+        }
+    }
+
+    // Pin clipboard shortcut
+    if (pinShortcut) {
+        try {
+            globalShortcut.register(pinShortcut, () => {
+                const image = clipboard.readImage();
+                if (!image.isEmpty()) {
+                    createPinWindow(image.toDataURL());
+                }
+            });
+        } catch (e) {
+            console.error('Error registering pin shortcut:', e);
+        }
+    }
+
     if (!shortcut) return;
 
     try {
@@ -245,7 +277,7 @@ function createQuickNoteWindow(noteId = null) {
         minimizable: true,
         maximizable: false,
         alwaysOnTop: true,
-        icon: path.join(__dirname, 'icon_256.png'),
+        icon: path.join(__dirname, 'logo.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -304,7 +336,7 @@ function createNoteManagerWindow() {
         resizable: true,
         minimizable: true,
         maximizable: true,
-        icon: path.join(__dirname, 'icon_256.png'),
+        icon: path.join(__dirname, 'logo.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -363,6 +395,173 @@ app.on('will-quit', () => {
 });
 
 
+// ==================== Screenshot & Pin Logic ====================
+
+function createScreenshotWindow() {
+    if (screenshotWindow) return; // Prevent multiple screenshot windows
+
+    const display = screen.getPrimaryDisplay();
+    const { x: displayX, y: displayY, width: screenWidth, height: screenHeight } = display.bounds;
+    const factor = display.scaleFactor;
+
+    console.log('Creating screenshot window for display:', screenWidth, 'x', screenHeight, 'scale:', factor);
+
+    // Capture the screen BEFORE creating the window
+    desktopCapturer.getSources({
+        types: ['screen'],
+        thumbnailSize: { width: screenWidth * factor, height: screenHeight * factor }
+    }).then(sources => {
+        const source = sources[0];
+        if (!source) {
+            console.error('No screen source found');
+            return;
+        }
+
+        console.log('Got screen source, thumbnail size:', source.thumbnail.getSize());
+
+        // Convert thumbnail to dataURL - this is the actual screenshot
+        const imageDataURL = source.thumbnail.toDataURL();
+
+        // Now create the screenshot window
+        screenshotWindow = new BrowserWindow({
+            x: displayX,
+            y: displayY,
+            width: screenWidth,
+            height: screenHeight,
+            frame: false,
+            transparent: false,
+            backgroundColor: '#000000',
+            alwaysOnTop: true,
+            skipTaskbar: true,
+            fullscreen: false, // Don't use fullscreen mode
+            kiosk: false,
+            resizable: false,
+            movable: false,
+            minimizable: false,
+            maximizable: false,
+            hasShadow: false,
+            webPreferences: {
+                preload: path.join(__dirname, 'preload.js'),
+                contextIsolation: true,
+                nodeIntegration: false
+            }
+        });
+
+        // Set bounds to cover entire screen including taskbar
+        screenshotWindow.setBounds({
+            x: displayX,
+            y: displayY,
+            width: screenWidth,
+            height: screenHeight
+        });
+
+        // Ensure it's always on top
+        screenshotWindow.setAlwaysOnTop(true, 'screen-saver');
+
+        screenshotWindow.loadFile(path.join(__dirname, 'src', 'screenshot', 'index.html'));
+
+        // Send the pre-captured image data
+        screenshotWindow.webContents.on('did-finish-load', () => {
+            console.log('Screenshot window loaded, sending image data');
+            screenshotWindow.webContents.send('capture-screen', imageDataURL, {
+                width: screenWidth,
+                height: screenHeight,
+                scaleFactor: factor
+            });
+        });
+
+        screenshotWindow.on('closed', () => {
+            screenshotWindow = null;
+        });
+    }).catch(e => console.error('Error capturing screen:', e));
+}
+
+function createPinWindow(imageDataUrl) {
+    // Extract image dimensions from dataURL to set initial window size
+    const { nativeImage } = require('electron');
+    const image = nativeImage.createFromDataURL(imageDataUrl);
+    const imageSize = image.getSize();
+
+    // Calculate initial window size (max 50% of screen)
+    const display = screen.getPrimaryDisplay();
+    const { width: screenWidth, height: screenHeight } = display.workAreaSize;
+
+    let winWidth = imageSize.width;
+    let winHeight = imageSize.height;
+
+    const maxWidth = Math.floor(screenWidth * 0.5);
+    const maxHeight = Math.floor(screenHeight * 0.5);
+
+    // Scale down if too large
+    if (winWidth > maxWidth || winHeight > maxHeight) {
+        const scale = Math.min(maxWidth / winWidth, maxHeight / winHeight);
+        winWidth = Math.floor(winWidth * scale);
+        winHeight = Math.floor(winHeight * scale);
+    }
+
+    // Ensure minimum size
+    winWidth = Math.max(winWidth, 150);
+    winHeight = Math.max(winHeight, 100);
+
+    // Calculate center position
+    const x = Math.floor((screenWidth - winWidth) / 2);
+    const y = Math.floor((screenHeight - winHeight) / 2);
+
+    const pinWin = new BrowserWindow({
+        x,
+        y,
+        width: winWidth,
+        height: winHeight,
+        frame: false,
+        transparent: true,
+        alwaysOnTop: true,
+        skipTaskbar: false,
+        resizable: true,
+        minimizable: false,
+        maximizable: false,
+        hasShadow: true,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false
+        }
+    });
+
+    pinWin.loadFile(path.join(__dirname, 'src', 'pin-window', 'index.html'));
+
+    pinWin.webContents.on('did-finish-load', () => {
+        console.log('Pin window loaded, sending image data');
+        pinWin.webContents.send('set-image', imageDataUrl);
+    });
+
+    pinWindows.push(pinWin);
+
+    pinWin.on('closed', () => {
+        pinWindows = pinWindows.filter(w => w !== pinWin);
+        console.log('Pin window closed, remaining:', pinWindows.length);
+    });
+
+    console.log('Created pin window:', winWidth, 'x', winHeight);
+}
+
+// IPC for Screenshot
+ipcMain.on('close-screenshot', () => {
+    if (screenshotWindow) {
+        screenshotWindow.close();
+    }
+});
+
+ipcMain.on('pin-image', (event, dataUrl) => {
+    createPinWindow(dataUrl);
+});
+
+ipcMain.on('copy-to-clipboard', (event, dataUrl) => {
+    const { nativeImage } = require('electron');
+    const image = nativeImage.createFromDataURL(dataUrl);
+    clipboard.writeImage(image);
+});
+
+
 // ==================== IPC Handlers ====================
 
 // Settings Handlers
@@ -370,6 +569,8 @@ ipcMain.handle('get-settings', () => {
     return {
         dataPath: currentDataPath,
         globalShortcut: store.get('settings.globalShortcut', 'Alt+1'),
+        screenshotShortcut: store.get('settings.screenshotShortcut', 'F1'),
+        pinShortcut: store.get('settings.pinShortcut', 'F3'),
         floatingBallSize: store.get('settings.floatingBallSize', 120),
         floatingBallTheme: store.get('settings.floatingBallTheme', 'classic'),
         difyBaseUrl: store.get('settings.difyBaseUrl', ''),
@@ -418,6 +619,24 @@ ipcMain.handle('save-settings', (event, newSettings) => {
     if (newSettings.globalShortcut && newSettings.globalShortcut !== oldShortcut) {
         store.set('settings.globalShortcut', newSettings.globalShortcut);
         registerGlobalShortcut();
+    }
+
+    // Handle Screenshot Shortcut
+    if (newSettings.screenshotShortcut !== undefined) {
+        const oldScreenshotShortcut = store.get('settings.screenshotShortcut', 'F1');
+        if (newSettings.screenshotShortcut !== oldScreenshotShortcut) {
+            store.set('settings.screenshotShortcut', newSettings.screenshotShortcut);
+            registerGlobalShortcut();
+        }
+    }
+
+    // Handle Pin Shortcut
+    if (newSettings.pinShortcut !== undefined) {
+        const oldPinShortcut = store.get('settings.pinShortcut', 'F3');
+        if (newSettings.pinShortcut !== oldPinShortcut) {
+            store.set('settings.pinShortcut', newSettings.pinShortcut);
+            registerGlobalShortcut();
+        }
     }
 
     // Handle Dify Configuration
@@ -991,7 +1210,7 @@ function formatNoteToWord(note) {
 
 
 
-// Helper: Export note to PDF
+// Helper: Export note to PDF using Electron's built-in printToPDF
 async function exportNoteToPDF(note, outputPath) {
     const tagText = note.tags.length > 0 ? `Tags: ${note.tags.join(', ')}` : '';
     const html = `
@@ -1062,49 +1281,47 @@ async function exportNoteToPDF(note, outputPath) {
 </html>
 `;
 
-    try {
-        // Try to find Chrome or Edge
-        const possiblePaths = [
-            'C:/Program Files/Google/Chrome/Application/chrome.exe',
-            'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
-            'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
-            'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
-        ];
-
-        let executablePath = null;
-        for (const p of possiblePaths) {
-            if (fs.existsSync(p)) {
-                executablePath = p;
-                break;
+    return new Promise((resolve, reject) => {
+        // Create a hidden BrowserWindow for PDF generation
+        const pdfWindow = new BrowserWindow({
+            width: 800,
+            height: 600,
+            show: false,
+            webPreferences: {
+                nodeIntegration: false,
+                contextIsolation: true,
             }
-        }
-
-        if (!executablePath) {
-            throw new Error('Chrome or Edge not found. Please install Chrome or Edge to export PDF.');
-        }
-
-        const browser = await puppeteer.launch({
-            executablePath: executablePath,
-            headless: true,
         });
 
-        const page = await browser.newPage();
-        await page.setContent(html, { waitUntil: 'networkidle0' });
-        await page.pdf({
-            path: outputPath,
-            format: 'A4',
-            margin: {
-                top: '20mm',
-                right: '20mm',
-                bottom: '20mm',
-                left: '20mm',
-            },
+        pdfWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+
+        pdfWindow.webContents.on('did-finish-load', async () => {
+            try {
+                const pdfData = await pdfWindow.webContents.printToPDF({
+                    pageSize: 'A4',
+                    margins: {
+                        top: 0.8,      // inches
+                        bottom: 0.8,
+                        left: 0.8,
+                        right: 0.8,
+                    },
+                    printBackground: true,
+                });
+
+                fs.writeFileSync(outputPath, pdfData);
+                pdfWindow.close();
+                resolve();
+            } catch (error) {
+                pdfWindow.close();
+                reject(new Error(`PDF export failed: ${error.message}`));
+            }
         });
 
-        await browser.close();
-    } catch (error) {
-        throw new Error(`PDF export failed: ${error.message}`);
-    }
+        pdfWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+            pdfWindow.close();
+            reject(new Error(`Failed to load content: ${errorDescription}`));
+        });
+    });
 }
 
 // Single note export

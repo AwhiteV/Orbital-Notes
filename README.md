@@ -1,4 +1,5 @@
 # Orbital Notes 🚀
+![Orbital Notes Logo](assets/promo_logo.png)
 
 **Orbital Notes** 是一款专为高效工作者打造的轻量级、悬浮式个人笔记工具。它像卫星一样悬浮在您的桌面边缘，随时捕捉每一闪而过的灵感或关键信息。
 
