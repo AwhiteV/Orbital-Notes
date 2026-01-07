@@ -76,6 +76,7 @@ let noteManagerWindow = null;
 let tray = null;
 let screenshotWindow = null;
 let pinWindows = []; // Array to hold multiple pin windows
+let ocrWindow = null; // OCR result window
 
 // Create system tray
 function createTray() {
@@ -422,18 +423,18 @@ function createScreenshotWindow() {
         // Convert thumbnail to dataURL - this is the actual screenshot
         const imageDataURL = source.thumbnail.toDataURL();
 
-        // Now create the screenshot window
+        // Create the screenshot window (initially hidden)
         screenshotWindow = new BrowserWindow({
             x: displayX,
             y: displayY,
             width: screenWidth,
             height: screenHeight,
             frame: false,
-            transparent: false,
-            backgroundColor: '#000000',
+            transparent: true,  // 透明窗口
             alwaysOnTop: true,
             skipTaskbar: true,
-            fullscreen: false, // Don't use fullscreen mode
+            show: false,  // 初始隐藏
+            fullscreen: false,
             kiosk: false,
             resizable: false,
             movable: false,
@@ -551,6 +552,13 @@ ipcMain.on('close-screenshot', () => {
     }
 });
 
+ipcMain.on('show-window', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) {
+        win.show();
+    }
+});
+
 ipcMain.on('pin-image', (event, dataUrl) => {
     createPinWindow(dataUrl);
 });
@@ -559,6 +567,148 @@ ipcMain.on('copy-to-clipboard', (event, dataUrl) => {
     const { nativeImage } = require('electron');
     const image = nativeImage.createFromDataURL(dataUrl);
     clipboard.writeImage(image);
+});
+
+
+// ==================== OCR Logic ====================
+
+function createOcrResultWindow(imageDataUrl) {
+    const display = screen.getPrimaryDisplay();
+    const { width: screenWidth, height: screenHeight } = display.workAreaSize;
+
+    const winWidth = Math.min(1000, Math.floor(screenWidth * 0.7));
+    const winHeight = Math.min(600, Math.floor(screenHeight * 0.7));
+    const x = Math.floor((screenWidth - winWidth) / 2);
+    const y = Math.floor((screenHeight - winHeight) / 2);
+
+    ocrWindow = new BrowserWindow({
+        x,
+        y,
+        width: winWidth,
+        height: winHeight,
+        frame: false,
+        transparent: false,
+        alwaysOnTop: true,
+        skipTaskbar: false,
+        resizable: true,
+        minimizable: true,
+        maximizable: false,
+        icon: path.join(__dirname, 'logo.png'),
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false
+        }
+    });
+
+    ocrWindow.loadFile(path.join(__dirname, 'src', 'ocr-result', 'index.html'));
+
+    ocrWindow.webContents.on('did-finish-load', () => {
+        // Send image and loading state
+        ocrWindow.webContents.send('ocr-result', {
+            imageDataUrl: imageDataUrl,
+            loading: true
+        });
+
+        // Call OCR API
+        performOcr(imageDataUrl);
+    });
+
+    ocrWindow.on('closed', () => {
+        ocrWindow = null;
+    });
+}
+
+async function performOcr(imageDataUrl) {
+    const apiKey = process.env.MODELSCOPE_API_KEY;
+
+    if (!apiKey) {
+        if (ocrWindow) {
+            ocrWindow.webContents.send('ocr-result', {
+                error: 'API Key not configured. Please add MODELSCOPE_API_KEY to .env file.'
+            });
+        }
+        return;
+    }
+
+    try {
+        const response = await fetch('https://api-inference.modelscope.cn/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'Qwen/Qwen3-VL-30B-A3B-Instruct',
+                messages: [{
+                    role: 'user',
+                    content: [
+                        { type: 'text', text: 'Please recognize all the text in this image. Output only the recognized text content, no explanations needed. If there are both Chinese and English, preserve both.' },
+                        { type: 'image_url', image_url: { url: imageDataUrl } }
+                    ]
+                }]
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content || 'No text recognized';
+
+        if (ocrWindow) {
+            ocrWindow.webContents.send('ocr-result', { text });
+        }
+    } catch (error) {
+        console.error('OCR error:', error);
+        if (ocrWindow) {
+            ocrWindow.webContents.send('ocr-result', {
+                error: `OCR failed: ${error.message}`
+            });
+        }
+    }
+}
+
+// IPC for OCR
+ipcMain.handle('ocr-image', async (event, imageDataUrl) => {
+    // Close screenshot window first
+    if (screenshotWindow) {
+        screenshotWindow.close();
+    }
+
+    // Create OCR result window
+    createOcrResultWindow(imageDataUrl);
+
+    return { success: true };
+});
+
+// Export OCR text to Quick Note
+ipcMain.handle('export-ocr-to-note', async (event, text) => {
+    // Create a new note with the OCR text
+    const notes = store.get('notes') || [];
+    const newNote = {
+        id: uuidv4(),
+        title: 'OCR - ' + new Date().toLocaleString(),
+        content: text,
+        tags: ['ocr'],
+        images: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        pinned: false
+    };
+    notes.unshift(newNote);
+    store.set('notes', notes);
+
+    // Notify note manager to refresh
+    if (noteManagerWindow) {
+        noteManagerWindow.webContents.send('notes-updated');
+    }
+
+    // Open Quick Note window with the new note
+    createQuickNoteWindow(newNote.id);
+
+    return { success: true, noteId: newNote.id };
 });
 
 

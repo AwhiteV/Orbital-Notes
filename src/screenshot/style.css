@@ -4,8 +4,8 @@ html {
     padding: 0;
     width: 100%;
     height: 100%;
-    background: #000000;
-    /* Black background for reliable rendering */
+    background: transparent;
+    /* 透明背景 */
     overflow: hidden;
     user-select: none;
     font-family: 'Segoe UI', Arial, sans-serif;

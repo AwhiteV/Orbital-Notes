@@ -64,6 +64,7 @@ contextBridge.exposeInMainWorld('noteAPI', {
         return () => ipcRenderer.removeListener('capture-screen', callback);
     },
     closeScreenshot: () => ipcRenderer.send('close-screenshot'),
+    showWindow: () => ipcRenderer.send('show-window'),
     pinImage: (dataUrl) => ipcRenderer.send('pin-image', dataUrl),
     copyToClipboard: (dataUrl) => ipcRenderer.send('copy-to-clipboard', dataUrl),
 
@@ -71,5 +72,13 @@ contextBridge.exposeInMainWorld('noteAPI', {
     onSetImage: (callback) => {
         ipcRenderer.on('set-image', (event, dataUrl) => callback(dataUrl));
         return () => ipcRenderer.removeListener('set-image', callback);
+    },
+
+    // OCR
+    ocrImage: (dataUrl) => ipcRenderer.invoke('ocr-image', dataUrl),
+    exportOcrToNote: (text) => ipcRenderer.invoke('export-ocr-to-note', text),
+    onOcrResult: (callback) => {
+        ipcRenderer.on('ocr-result', (event, data) => callback(data));
+        return () => ipcRenderer.removeListener('ocr-result', callback);
     }
 });

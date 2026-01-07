@@ -5,6 +5,7 @@ const ctx = canvas.getContext('2d');
 const toolbar = document.getElementById('toolbar');
 const sizeInfo = document.getElementById('size-info');
 const btnPin = document.getElementById('btn-pin');
+const btnOcr = document.getElementById('btn-ocr');
 const btnCopy = document.getElementById('btn-copy');
 const btnClose = document.getElementById('btn-close');
 
@@ -18,7 +19,7 @@ let scaleFactor = 1;
 let fullScreenImage = null;
 let captureStatus = 'waiting'; // 'waiting', 'loading', 'ready', 'error'
 
-// Initialize canvas with proper dimensions
+// Initialize canvas with proper dimensions (no loading text)
 function initCanvas() {
     const w = window.innerWidth || window.screen.width || 1920;
     const h = window.innerHeight || window.screen.height || 1080;
@@ -28,16 +29,10 @@ function initCanvas() {
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
 
-    // Draw initial state
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = 'white';
-    ctx.font = '20px Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Waiting for screen capture...', w / 2, h / 2);
+    // Don't draw anything - window is hidden initially
 }
 
-// Wait for DOM and window to be ready
+// Wait for DOM to be ready
 if (document.readyState === 'complete') {
     initCanvas();
 } else {
@@ -82,14 +77,6 @@ if (window.noteAPI && window.noteAPI.onCaptureScreen) {
         // Reset and scale context
         ctx.setTransform(scaleFactor, 0, 0, scaleFactor, 0, 0);
 
-        // Show loading state
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(0, 0, w, h);
-        ctx.fillStyle = 'white';
-        ctx.font = '20px Arial, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Loading screenshot...', w / 2, h / 2);
-
         try {
             // Create image from dataURL
             const img = new Image();
@@ -107,12 +94,21 @@ if (window.noteAPI && window.noteAPI.onCaptureScreen) {
 
                 console.log('Screenshot loaded:', offCanvas.width, 'x', offCanvas.height);
                 render();
+
+                // Now show the window
+                if (window.noteAPI && window.noteAPI.showWindow) {
+                    window.noteAPI.showWindow();
+                }
             };
 
             img.onerror = (err) => {
                 console.error('Image load error:', err);
                 captureStatus = 'error';
                 showError('Failed to load screenshot');
+                // Show window even on error so user can close it
+                if (window.noteAPI && window.noteAPI.showWindow) {
+                    window.noteAPI.showWindow();
+                }
             };
 
             img.src = imageDataURL;
@@ -120,6 +116,9 @@ if (window.noteAPI && window.noteAPI.onCaptureScreen) {
             console.error('Error loading screenshot:', e);
             captureStatus = 'error';
             showError('Screenshot load failed: ' + e.message);
+            if (window.noteAPI && window.noteAPI.showWindow) {
+                window.noteAPI.showWindow();
+            }
         }
     });
 } else {
@@ -281,6 +280,7 @@ window.addEventListener('keydown', (e) => {
 
 // Toolbar buttons
 if (btnPin) btnPin.addEventListener('click', () => finishScreenshot('pin'));
+if (btnOcr) btnOcr.addEventListener('click', () => finishScreenshot('ocr'));
 if (btnCopy) btnCopy.addEventListener('click', () => finishScreenshot('copy'));
 if (btnClose) btnClose.addEventListener('click', () => {
     if (window.noteAPI && window.noteAPI.closeScreenshot) {
@@ -320,9 +320,13 @@ function finishScreenshot(action) {
     if (window.noteAPI) {
         if (action === 'pin') {
             window.noteAPI.pinImage(dataURL);
+            window.noteAPI.closeScreenshot();
         } else if (action === 'copy') {
             window.noteAPI.copyToClipboard(dataURL);
+            window.noteAPI.closeScreenshot();
+        } else if (action === 'ocr') {
+            // OCR will close screenshot window after opening result window
+            window.noteAPI.ocrImage(dataURL);
         }
-        window.noteAPI.closeScreenshot();
     }
 }

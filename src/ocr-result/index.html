@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>OCR Result</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Left: Screenshot Image -->
+        <div class="image-panel">
+            <div class="panel-header">Screenshot</div>
+            <div class="image-wrapper">
+                <img id="screenshot-img" src="" alt="Screenshot">
+            </div>
+        </div>
+
+        <!-- Right: OCR Text Result -->
+        <div class="text-panel">
+            <div class="panel-header">
+                <span>Recognized Text</span>
+                <div class="header-buttons">
+                    <button id="btn-copy" title="Copy to Clipboard">Copy</button>
+                    <button id="btn-export" title="Export to Quick Note">Note</button>
+                </div>
+            </div>
+            <div class="text-wrapper">
+                <div id="ocr-text" class="ocr-text"></div>
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <span>Recognizing...</span>
+                </div>
+                <div id="error" class="error hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <button id="btn-close">Close</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
