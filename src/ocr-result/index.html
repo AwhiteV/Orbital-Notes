@@ -17,12 +17,13 @@
             </div>
         </div>
 
-        <!-- Right: OCR Text Result -->
+        <!-- Middle: OCR Text Result -->
         <div class="text-panel">
             <div class="panel-header">
                 <span>Recognized Text</span>
                 <div class="header-buttons">
                     <button id="btn-copy" title="Copy to Clipboard">Copy</button>
+                    <button id="btn-translate" title="Translate to Chinese">Translate</button>
                     <button id="btn-export" title="Export to Quick Note">Note</button>
                 </div>
             </div>
@@ -33,6 +34,24 @@
                     <span>Recognizing...</span>
                 </div>
                 <div id="error" class="error hidden"></div>
+            </div>
+        </div>
+
+        <!-- Right: Translation Result (hidden by default) -->
+        <div id="translate-panel" class="translate-panel hidden">
+            <div class="panel-header">
+                <span>Chinese Translation</span>
+                <div class="header-buttons">
+                    <button id="btn-copy-translate" title="Copy Translation">Copy</button>
+                </div>
+            </div>
+            <div class="text-wrapper">
+                <div id="translate-text" class="ocr-text"></div>
+                <div id="translate-loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <span>Translating...</span>
+                </div>
+                <div id="translate-error" class="error hidden"></div>
             </div>
         </div>
     </div>

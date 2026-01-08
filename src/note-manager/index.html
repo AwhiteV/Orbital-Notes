@@ -753,6 +753,9 @@
                 <button
                     class="settings-tab px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                     data-tab="dify">Dify</button>
+                <button
+                    class="settings-tab px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                    data-tab="modelscope">AI Model</button>
             </div>
 
             <!-- Tab Content -->
@@ -901,6 +904,37 @@
                             <p class="text-xs text-blue-600 dark:text-blue-400 leading-relaxed">
                                 <span class="font-bold">Note:</span> These settings are used for the AI Daily News
                                 feature. You can find your API key in the Dify Workflow "API Access" section.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modelscope Tab -->
+                <div id="tabModelscope" class="tab-content hidden space-y-4">
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[18px]">psychology</span>
+                            AI Model Configuration (Modelscope)
+                        </h4>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    Modelscope API Key
+                                </label>
+                                <input id="modelscopeApiKeyInput" type="password"
+                                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <p class="text-xs text-slate-400 mt-1">Used for OCR and Image Translation. (Leave empty
+                                    to use .env)</p>
+                            </div>
+                        </div>
+
+                        <div
+                            class="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/30">
+                            <p class="text-xs text-amber-600 dark:text-amber-400 leading-relaxed">
+                                <span class="font-bold">Note:</span> This key is used for advanced AI features like OCR
+                                and Translation. You can get your key from the Modelscope platform.
                             </p>
                         </div>
                     </div>
@@ -1938,6 +1972,7 @@
             // Populate Dify Configuration
             document.getElementById('difyBaseUrlInput').value = settings.difyBaseUrl || '';
             document.getElementById('difyApiKeyInput').value = settings.difyApiKey || '';
+            document.getElementById('modelscopeApiKeyInput').value = settings.modelscopeApiKey || '';
 
             // Populate Shortcuts
             document.getElementById('shortcutInput').value = settings.globalShortcut || 'Alt+1';
@@ -2026,6 +2061,7 @@
 
             const newDifyBaseUrl = document.getElementById('difyBaseUrlInput').value.trim();
             const newDifyApiKey = document.getElementById('difyApiKeyInput').value.trim();
+            const newModelscopeApiKey = document.getElementById('modelscopeApiKeyInput').value.trim();
             const newAutoLaunch = document.getElementById('autoLaunchCheckbox').checked;
 
             const newSettings = {
@@ -2037,6 +2073,7 @@
                 floatingBallTheme: selectedTheme,
                 difyBaseUrl: newDifyBaseUrl,
                 difyApiKey: newDifyApiKey,
+                modelscopeApiKey: newModelscopeApiKey,
                 autoLaunch: newAutoLaunch
             };
 

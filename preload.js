@@ -80,5 +80,12 @@ contextBridge.exposeInMainWorld('noteAPI', {
     onOcrResult: (callback) => {
         ipcRenderer.on('ocr-result', (event, data) => callback(data));
         return () => ipcRenderer.removeListener('ocr-result', callback);
+    },
+
+    // Translation
+    translateText: (text) => ipcRenderer.send('translate-text', text),
+    onTranslateResult: (callback) => {
+        ipcRenderer.on('translate-result', (event, data) => callback(data));
+        return () => ipcRenderer.removeListener('translate-result', callback);
     }
 });

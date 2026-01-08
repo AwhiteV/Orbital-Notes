@@ -18,6 +18,54 @@ let screenSourceId = null;
 let scaleFactor = 1;
 let fullScreenImage = null;
 let captureStatus = 'waiting'; // 'waiting', 'loading', 'ready', 'error'
+let isResizing = false;
+let resizeAnchor = null; // 'nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'
+const ANCHOR_SIZE = 8; // Size of anchor points
+
+function normalizeSelection() {
+    const x1 = Math.min(startX, endX);
+    const y1 = Math.min(startY, endY);
+    const x2 = Math.max(startX, endX);
+    const y2 = Math.max(startY, endY);
+    startX = x1;
+    startY = y1;
+    endX = x2;
+    endY = y2;
+}
+
+function getAnchorRects(x, y, w, h) {
+    const half = ANCHOR_SIZE / 2;
+    return {
+        nw: { x: x - half, y: y - half },
+        n: { x: x + w / 2 - half, y: y - half },
+        ne: { x: x + w - half, y: y - half },
+        e: { x: x + w - half, y: y + h / 2 - half },
+        se: { x: x + w - half, y: y + h - half },
+        s: { x: x + w / 2 - half, y: y + h - half },
+        sw: { x: x - half, y: y + h - half },
+        w: { x: x - half, y: y + h / 2 - half }
+    };
+}
+
+function getAnchorUnderMouse(mx, my) {
+    const x = Math.min(startX, endX);
+    const y = Math.min(startY, endY);
+    const w = Math.abs(endX - startX);
+    const h = Math.abs(endY - startY);
+
+    if (w < 5 || h < 5) return null;
+
+    const anchors = getAnchorRects(x, y, w, h);
+    const hitSize = ANCHOR_SIZE + 4; // Larger hit area
+
+    for (const [key, rect] of Object.entries(anchors)) {
+        if (mx >= rect.x - 2 && mx <= rect.x + ANCHOR_SIZE + 2 &&
+            my >= rect.y - 2 && my <= rect.y + ANCHOR_SIZE + 2) {
+            return key;
+        }
+    }
+    return null;
+}
 
 // Initialize canvas with proper dimensions (no loading text)
 function initCanvas() {
@@ -200,7 +248,19 @@ function render() {
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, selW, selH);
 
+            // Draw anchors
+            const anchors = getAnchorRects(x, y, selW, selH);
+            ctx.fillStyle = '#4CAF50';
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+
+            for (const rect of Object.values(anchors)) {
+                ctx.fillRect(rect.x, rect.y, ANCHOR_SIZE, ANCHOR_SIZE);
+                ctx.strokeRect(rect.x, rect.y, ANCHOR_SIZE, ANCHOR_SIZE);
+            }
+
             // Show size info
+
             sizeInfo.textContent = Math.round(selW) + ' x ' + Math.round(selH);
             sizeInfo.style.left = x + 'px';
             sizeInfo.style.top = Math.max(0, y - 25) + 'px';
@@ -236,29 +296,77 @@ canvas.addEventListener('mousedown', (e) => {
         return;
     }
 
+    const mx = e.offsetX;
+    const my = e.offsetY;
+
+    // Check if clicking resize anchor
+    const anchor = getAnchorUnderMouse(mx, my);
+    if (anchor) {
+        // Start resizing
+        isResizing = true;
+        resizeAnchor = anchor;
+        // Normalize coordinates to ensure start/end are consistently top-left/bottom-right relative to selection
+        normalizeSelection();
+        toolbar.classList.add('hidden');
+        sizeInfo.classList.remove('hidden');
+        return;
+    }
+
+    // New selection start
     isDrawing = true;
-    startX = e.offsetX;
-    startY = e.offsetY;
-    endX = e.offsetX;
-    endY = e.offsetY;
+    startX = mx;
+    startY = my;
+    endX = mx;
+    endY = my;
     toolbar.classList.add('hidden');
     sizeInfo.classList.remove('hidden');
-    console.log('mousedown at', startX, startY);
     render();
 });
 
 canvas.addEventListener('mousemove', (e) => {
+    const mx = e.offsetX;
+    const my = e.offsetY;
+
+    // Change cursor based on hover
+    if (!isDrawing && !isResizing) {
+        const anchor = getAnchorUnderMouse(mx, my);
+        if (anchor) {
+            const cursors = {
+                nw: 'nw-resize', n: 'n-resize', ne: 'ne-resize',
+                e: 'e-resize', se: 'se-resize', s: 's-resize',
+                sw: 'sw-resize', w: 'w-resize'
+            };
+            canvas.style.cursor = cursors[anchor];
+        } else {
+            canvas.style.cursor = 'crosshair';
+        }
+    }
+
+    if (isResizing) {
+        // Handle resizing based on anchor
+        if (resizeAnchor.includes('e')) endX = mx;
+        if (resizeAnchor.includes('w')) startX = mx;
+        if (resizeAnchor.includes('s')) endY = my;
+        if (resizeAnchor.includes('n')) startY = my;
+        render();
+        return;
+    }
+
     if (isDrawing) {
-        endX = e.offsetX;
-        endY = e.offsetY;
+        endX = mx;
+        endY = my;
         render();
     }
 });
 
 canvas.addEventListener('mouseup', () => {
-    if (isDrawing) {
+    if (isResizing) {
+        isResizing = false;
+        resizeAnchor = null;
+        normalizeSelection(); // Ensure consistent rect after resize
+        render();
+    } else if (isDrawing) {
         isDrawing = false;
-        console.log('mouseup, selection:', startX, startY, 'to', endX, endY);
         render();
     }
 });

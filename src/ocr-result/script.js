@@ -8,6 +8,14 @@ const btnCopy = document.getElementById('btn-copy');
 const btnExport = document.getElementById('btn-export');
 const btnClose = document.getElementById('btn-close');
 
+// Translation elements
+const btnTranslate = document.getElementById('btn-translate');
+const translatePanel = document.getElementById('translate-panel');
+const translateText = document.getElementById('translate-text');
+const translateLoading = document.getElementById('translate-loading');
+const translateError = document.getElementById('translate-error');
+const btnCopyTranslate = document.getElementById('btn-copy-translate');
+
 // Receive OCR data from main process
 if (window.noteAPI && window.noteAPI.onOcrResult) {
     window.noteAPI.onOcrResult((data) => {
@@ -33,6 +41,25 @@ if (window.noteAPI && window.noteAPI.onOcrResult) {
     });
 }
 
+// Listen for translation results
+if (window.noteAPI && window.noteAPI.onTranslateResult) {
+    window.noteAPI.onTranslateResult((data) => {
+        if (data.loading) {
+            translateLoading.classList.remove('hidden');
+            translateText.textContent = '';
+            translateError.classList.add('hidden');
+        } else if (data.error) {
+            translateLoading.classList.add('hidden');
+            translateError.textContent = data.error;
+            translateError.classList.remove('hidden');
+        } else if (data.text) {
+            translateLoading.classList.add('hidden');
+            translateError.classList.add('hidden');
+            translateText.textContent = data.text;
+        }
+    });
+}
+
 // Copy button
 btnCopy.addEventListener('click', () => {
     const text = ocrText.textContent;
@@ -44,6 +71,40 @@ btnCopy.addEventListener('click', () => {
         setTimeout(() => {
             btnCopy.textContent = 'Copy';
             btnCopy.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+    });
+});
+
+// Translate button
+btnTranslate.addEventListener('click', async () => {
+    const text = ocrText.textContent;
+    if (!text) return;
+
+    // Show translate panel
+    translatePanel.classList.remove('hidden');
+    translateLoading.classList.remove('hidden');
+    translateText.textContent = '';
+    translateError.classList.add('hidden');
+
+    // Call translate API
+    if (window.noteAPI && window.noteAPI.translateText) {
+        window.noteAPI.translateText(text);
+    }
+});
+
+// Copy translation button
+btnCopyTranslate.addEventListener('click', () => {
+    const text = translateText.textContent;
+    if (!text) return;
+
+    navigator.clipboard.writeText(text).then(() => {
+        btnCopyTranslate.textContent = 'Copied!';
+        btnCopyTranslate.classList.add('copied');
+        setTimeout(() => {
+            btnCopyTranslate.textContent = 'Copy';
+            btnCopyTranslate.classList.remove('copied');
         }, 2000);
     }).catch(err => {
         console.error('Failed to copy:', err);

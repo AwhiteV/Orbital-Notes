@@ -45,6 +45,7 @@ function initStore() {
                 floatingBallSize: 120, // Default size
                 difyBaseUrl: '', // Dify base URL (empty means use .env)
                 difyApiKey: '', // Dify API key (empty means use .env)
+                modelscopeApiKey: '', // Modelscope API key (empty means use .env)
                 autoLaunch: false, // Auto launch on system startup
                 floatingBallTheme: 'classic' // Default theme
             }
@@ -620,7 +621,8 @@ function createOcrResultWindow(imageDataUrl) {
 }
 
 async function performOcr(imageDataUrl) {
-    const apiKey = process.env.MODELSCOPE_API_KEY;
+    const settingsApiKey = store.get('settings.modelscopeApiKey', '');
+    const apiKey = settingsApiKey || process.env.MODELSCOPE_API_KEY;
 
     if (!apiKey) {
         if (ocrWindow) {
@@ -711,6 +713,50 @@ ipcMain.handle('export-ocr-to-note', async (event, text) => {
     return { success: true, noteId: newNote.id };
 });
 
+// Translate text to Chinese
+ipcMain.on('translate-text', async (event, text) => {
+    const settingsApiKey = store.get('settings.modelscopeApiKey', '');
+    const apiKey = settingsApiKey || process.env.MODELSCOPE_API_KEY;
+
+    if (!apiKey) {
+        event.sender.send('translate-result', {
+            error: 'API Key not configured. Please add MODELSCOPE_API_KEY to .env file.'
+        });
+        return;
+    }
+
+    try {
+        const response = await fetch('https://api-inference.modelscope.cn/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'Qwen/Qwen3-30B-A3B-Instruct-2507',
+                messages: [{
+                    role: 'user',
+                    content: `Please translate the following text to Chinese. Output only the translated text, no explanations needed:\n\n${text}`
+                }]
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const translatedText = data.choices?.[0]?.message?.content || 'Translation failed';
+
+        event.sender.send('translate-result', { text: translatedText });
+    } catch (error) {
+        console.error('Translation error:', error);
+        event.sender.send('translate-result', {
+            error: `Translation failed: ${error.message}`
+        });
+    }
+});
+
 
 // ==================== IPC Handlers ====================
 
@@ -725,6 +771,7 @@ ipcMain.handle('get-settings', () => {
         floatingBallTheme: store.get('settings.floatingBallTheme', 'classic'),
         difyBaseUrl: store.get('settings.difyBaseUrl', ''),
         difyApiKey: store.get('settings.difyApiKey', ''),
+        modelscopeApiKey: store.get('settings.modelscopeApiKey', ''),
         autoLaunch: store.get('settings.autoLaunch', false)
     };
 });
@@ -795,6 +842,9 @@ ipcMain.handle('save-settings', (event, newSettings) => {
     }
     if (newSettings.difyApiKey !== undefined) {
         store.set('settings.difyApiKey', newSettings.difyApiKey);
+    }
+    if (newSettings.modelscopeApiKey !== undefined) {
+        store.set('settings.modelscopeApiKey', newSettings.modelscopeApiKey);
     }
 
     // Handle Data Path

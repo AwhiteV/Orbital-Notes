@@ -58,12 +58,25 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
-/* Right Panel - Text */
+/* Middle Panel - Text */
 .text-panel {
     flex: 1;
     display: flex;
     flex-direction: column;
     background: #1a1a1a;
+    border-right: 1px solid #333;
+}
+
+/* Right Panel - Translation */
+.translate-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #1a1a1a;
+}
+
+.translate-panel.hidden {
+    display: none;
 }
 
 .text-wrapper {
@@ -130,7 +143,9 @@ body {
 
 /* Copy Button */
 #btn-copy,
-#btn-export {
+#btn-export,
+#btn-translate,
+#btn-copy-translate {
     padding: 6px 14px;
     background: #D0BB95;
     color: #1a1a1a;
@@ -143,17 +158,22 @@ body {
 }
 
 #btn-copy:hover,
-#btn-export:hover {
+#btn-export:hover,
+#btn-translate:hover,
+#btn-copy-translate:hover {
     background: #e0cba5;
     transform: translateY(-1px);
 }
 
 #btn-copy:active,
-#btn-export:active {
+#btn-export:active,
+#btn-translate:active,
+#btn-copy-translate:active {
     transform: translateY(0);
 }
 
-#btn-copy.copied {
+#btn-copy.copied,
+#btn-copy-translate.copied {
     background: #4caf50;
     color: white;
 }
@@ -164,6 +184,14 @@ body {
 
 #btn-export:hover {
     background: #7cb3f5;
+}
+
+#btn-translate {
+    background: #9c7ce0;
+}
+
+#btn-translate:hover {
+    background: #b39ce8;
 }
 
 /* Toolbar */
