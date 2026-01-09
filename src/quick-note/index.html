@@ -1008,9 +1008,61 @@
                         e.preventDefault();
                         wrapSelection('*', '*');
                         break;
+                    case '1':
+                        e.preventDefault();
+                        insertHeading(1);
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        insertHeading(2);
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        insertHeading(3);
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        insertHeading(4);
+                        break;
                 }
             }
         });
+
+        // Insert heading at current line
+        function insertHeading(level) {
+            const start = noteContent.selectionStart;
+            const text = noteContent.value;
+
+            // Find line start
+            let lineStart = start;
+            while (lineStart > 0 && text[lineStart - 1] !== '\n') {
+                lineStart--;
+            }
+
+            // Find line end
+            let lineEnd = start;
+            while (lineEnd < text.length && text[lineEnd] !== '\n') {
+                lineEnd++;
+            }
+
+            // Get current line content
+            const lineContent = text.substring(lineStart, lineEnd);
+
+            // Remove existing heading prefix (if any)
+            const cleanLine = lineContent.replace(/^#{1,6}\s*/, '');
+
+            // Create new heading prefix
+            const headingPrefix = '#'.repeat(level) + ' ';
+
+            // Replace line content
+            noteContent.value = text.substring(0, lineStart) + headingPrefix + cleanLine + text.substring(lineEnd);
+
+            // Set cursor position after heading prefix
+            const newCursorPos = lineStart + headingPrefix.length;
+            noteContent.selectionStart = noteContent.selectionEnd = newCursorPos;
+            noteContent.focus();
+            markUnsaved();
+        }
     </script>
 </body>
 
