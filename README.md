@@ -52,6 +52,9 @@
 
 ### 🔗 DIFY CONFIG
 ![dify配置](assets/dify_config.jpg)
+
+### 📈 AI 产品新趋势
+![AI产品新趋势](assets/trending.png)
 ---
 
 ## 🚀 快速开始
