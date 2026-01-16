@@ -1,6 +1,6 @@
 {
   "name": "floating-note-tool",
-  "version": "1.0.0",
+  "version": "1.1.6",
   "description": "Windows floating ball note-taking tool",
   "main": "main.js",
   "scripts": {
@@ -25,7 +25,7 @@
     "appId": "com.orbitalnotes.app",
     "productName": "Orbital Notes",
     "win": {
-      "target": "portable",
+      "target": "nsis",
       "icon": "logo.png",
       "sign": null
     },

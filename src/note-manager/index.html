@@ -581,7 +581,7 @@
                         <button id="btnNewNote"
                             class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary hover:opacity-90 text-white py-2.5 font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
                             <span class="material-symbols-outlined text-[20px]">add</span>
-                            <span>New Note</span>
+                            <span data-i18n="newNote">New Note</span>
                         </button>
                         <button id="btnBatchMode"
                             class="flex items-center justify-center gap-1 px-3 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 py-2.5 font-medium transition-all active:scale-[0.98]"
@@ -589,11 +589,19 @@
                             <span class="material-symbols-outlined text-[18px]">checklist</span>
                         </button>
                     </div>
-                    <button id="btnFetchAINews"
-                        class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary hover:opacity-90 text-white py-2.5 font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
-                        <span class="material-symbols-outlined text-[20px]">newspaper</span>
-                        <span id="aiNewsButtonText">AI Daily News</span>
-                    </button>
+                    <div class="flex gap-2">
+                        <button id="btnFetchAINews"
+                            class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary hover:opacity-90 text-white py-2.5 font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+                            <span class="material-symbols-outlined text-[20px]">newspaper</span>
+                            <span id="aiNewsButtonText" data-i18n="aiDailyNews">AI Daily News</span>
+                        </button>
+                        <button id="btnFetchAIProductTrends"
+                            class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:opacity-90 text-white py-2.5 font-bold shadow-lg shadow-emerald-600/20 transition-all active:scale-[0.98]">
+                            <span class="material-symbols-outlined text-[20px]">trending_up</span>
+                            <!-- Removed text label for compactness on single row, or keep short -->
+                            <span id="aiProductTrendsButtonText" data-i18n="aiProductTrends">Trends</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -607,8 +615,8 @@
                 <!-- Empty State -->
                 <div id="emptyState" class="flex-1 flex flex-col items-center justify-center text-slate-400">
                     <span class="material-symbols-outlined text-[64px] mb-4">description</span>
-                    <p class="text-lg font-medium">Select a note to view</p>
-                    <p class="text-sm mt-1">or create a new one</p>
+                    <p class="text-lg font-medium" data-i18n="selectNoteToView">Select a note to view</p>
+                    <p class="text-sm mt-1" data-i18n="orCreateNewOne">or create a new one</p>
                 </div>
 
                 <!-- Note Detail (hidden by default) -->
@@ -658,6 +666,11 @@
                                         </button>
                                     </div>
                                 </div>
+                                <button id="btnTranslateNote"
+                                    class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
+                                    title="Translate to Chinese">
+                                    <span class="material-symbols-outlined text-[20px]">translate</span>
+                                </button>
                                 <button id="btnEditNote"
                                     class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
                                     title="Edit Note">
@@ -733,7 +746,7 @@
         <div class="modal-content dark:bg-surface-dark w-[500px] max-w-[90%] flex flex-col h-[500px]">
             <!-- Header -->
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Settings</h3>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white" data-i18n="settings">Settings</h3>
                 <button id="btnCloseSettings" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                     <span class="material-symbols-outlined">close</span>
                 </button>
@@ -743,35 +756,51 @@
             <div class="flex border-b border-slate-200 dark:border-slate-700 mb-4">
                 <button
                     class="settings-tab active px-4 py-2 text-sm font-medium text-primary border-b-2 border-primary transition-colors"
-                    data-tab="general">General</button>
+                    data-tab="general" data-i18n="general">General</button>
                 <button
                     class="settings-tab px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                    data-tab="shortcuts">Shortcuts</button>
+                    data-tab="shortcuts" data-i18n="shortcuts">Shortcuts</button>
                 <button
                     class="settings-tab px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                    data-tab="tags">Tags</button>
+                    data-tab="tags" data-i18n="tags">Tags</button>
                 <button
                     class="settings-tab px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                     data-tab="dify">Dify</button>
                 <button
                     class="settings-tab px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                    data-tab="modelscope">AI Model</button>
+                    data-tab="modelscope" data-i18n="aiModel">AI Model</button>
             </div>
+
 
             <!-- Tab Content -->
             <div class="flex-1 overflow-y-auto custom-scrollbar p-1">
                 <!-- General Tab -->
                 <div id="tabGeneral" class="tab-content space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Data Storage
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                            data-i18n="language">Language</label>
+                        <select id="languageSelect"
+                            class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="en">English</option>
+                            <option value="zh">简体中文</option>
+                        </select>
+                        <p class="text-xs text-slate-400 mt-1" data-i18n="languageDesc">Choose your preferred display
+                            language</p>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-200 dark:border-slate-700">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                            data-i18n="dataStoragePath">Data Storage
                             Path</label>
                         <div class="flex gap-2">
                             <input id="dataPathInput" readonly type="text"
                                 class="flex-1 rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 px-3 py-2">
                             <button id="btnBrowsePath"
-                                class="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Browse</button>
+                                class="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                                data-i18n="browse">Browse</button>
                         </div>
-                        <p class="text-xs text-slate-400 mt-1">Requires restart to apply changes.</p>
+                        <p class="text-xs text-slate-400 mt-1" data-i18n="dataPathDesc">Requires restart to apply
+                            changes.</p>
                     </div>
 
                     <div class="pt-2">
@@ -787,7 +816,8 @@
                     </div>
 
                     <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3"
+                            data-i18n="floatingBallTheme">
                             Floating Ball Theme
                         </label>
                         <div class="grid grid-cols-2 gap-3" id="themePicker">
@@ -818,12 +848,33 @@
                     <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Auto
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                    data-i18n="autoLaunch">Auto
                                     Launch</label>
-                                <p class="text-xs text-slate-400 mt-0.5">Start Orbital Notes when you log in</p>
+                                <p class="text-xs text-slate-400 mt-0.5" data-i18n="autoLaunchDesc">Start Orbital Notes
+                                    when you log in</p>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="autoLaunchCheckbox" class="sr-only peer">
+                                <div
+                                    class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 dark:peer-focus:ring-primary/50 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-primary">
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                    data-i18n="hoverToShowTodoList">Hover to
+                                    Show Todo List</label>
+                                <p class="text-xs text-slate-400 mt-0.5" data-i18n="hoverToShowTodoListDesc">Display
+                                    Todo List panel when hovering over the
+                                    floating ball</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="hoverToShowTodoListCheckbox" class="sr-only peer">
                                 <div
                                     class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 dark:peer-focus:ring-primary/50 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-primary">
                                 </div>
@@ -836,37 +887,43 @@
                 <!-- Shortcuts Tab -->
                 <div id="tabShortcuts" class="tab-content hidden space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Toggle Floating
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                            data-i18n="toggleFloatingBall">Toggle Floating
                             Ball</label>
                         <input id="shortcutInput" type="text" placeholder="Click to record (e.g. Alt+1)"
                             class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent px-3 py-2">
-                        <p class="text-xs text-slate-400 mt-1">Default: Alt+1</p>
+                        <p class="text-xs text-slate-400 mt-1"><span data-i18n="defaultShortcut">Default</span>: Alt+1
+                        </p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Screenshot
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                            data-i18n="screenshotShortcut">Screenshot
                             (Capture Screen)</label>
                         <input id="screenshotShortcutInput" type="text" placeholder="Click to record (e.g. F1)"
                             class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent px-3 py-2">
-                        <p class="text-xs text-slate-400 mt-1">Default: F1</p>
+                        <p class="text-xs text-slate-400 mt-1"><span data-i18n="defaultShortcut">Default</span>: F1</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Pin Clipboard
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                            data-i18n="pinClipboardImage">Pin Clipboard
                             Image</label>
                         <input id="pinShortcutInput" type="text" placeholder="Click to record (e.g. F3)"
                             class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent px-3 py-2">
-                        <p class="text-xs text-slate-400 mt-1">Default: F3</p>
+                        <p class="text-xs text-slate-400 mt-1"><span data-i18n="defaultShortcut">Default</span>: F3</p>
                     </div>
                 </div>
 
                 <!-- Tags Tab -->
                 <div id="tabTags" class="tab-content hidden space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Existing
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                            data-i18n="existingTags">Existing
                             Tags</label>
                         <div id="settingsTagList" class="flex flex-wrap gap-2">
                             <!-- Tags will be rendered here -->
                         </div>
-                        <p class="text-xs text-slate-400 mt-2">Click X to delete a tag from the system (removes from
+                        <p class="text-xs text-slate-400 mt-2" data-i18n="tagsDesc">Click X to delete a tag from the
+                            system (removes from
                             filter list only).</p>
                     </div>
                 </div>
@@ -914,25 +971,28 @@
                     <div class="space-y-4">
                         <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
                             <span class="material-symbols-outlined text-[18px]">psychology</span>
-                            AI Model Configuration (Modelscope)
+                            <span data-i18n="aiModelConfig">AI Model Configuration (Modelscope)</span>
                         </h4>
 
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                                    data-i18n="modelscopeApiKey">
                                     Modelscope API Key
                                 </label>
                                 <input id="modelscopeApiKeyInput" type="password"
                                     placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                                     class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
-                                <p class="text-xs text-slate-400 mt-1">Used for OCR and Image Translation. (Leave empty
+                                <p class="text-xs text-slate-400 mt-1" data-i18n="modelscopeApiKeyDesc">Used for OCR and
+                                    Image Translation. (Leave empty
                                     to use .env)</p>
                             </div>
                         </div>
 
                         <div
                             class="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/30">
-                            <p class="text-xs text-amber-600 dark:text-amber-400 leading-relaxed">
+                            <p class="text-xs text-amber-600 dark:text-amber-400 leading-relaxed"
+                                data-i18n="modelscopeNote">
                                 <span class="font-bold">Note:</span> This key is used for advanced AI features like OCR
                                 and Translation. You can get your key from the Modelscope platform.
                             </p>
@@ -944,9 +1004,11 @@
             <!-- Footer -->
             <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
                 <button id="btnCancelSettings"
-                    class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
+                    class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                    data-i18n="cancel">Cancel</button>
                 <button id="btnSaveSettings"
-                    class="px-4 py-2 rounded-lg bg-primary text-white hover:opacity-90 transition-opacity">Save
+                    class="px-4 py-2 rounded-lg bg-primary text-white hover:opacity-90 transition-opacity"
+                    data-i18n="saveChanges">Save
                     Changes</button>
             </div>
         </div>
@@ -1029,6 +1091,7 @@
         </div>
     </div>
 
+    <script src="../i18n/languages.js"></script>
     <script>
         // State
         let notes = [];
@@ -1036,6 +1099,7 @@
         let selectedNoteId = null;
         let currentFilter = 'all';
         let searchQuery = '';
+        let currentLanguage = 'en';
         let isBatchMode = false;
         let selectedNoteIds = new Set();
 
@@ -1077,6 +1141,13 @@
                     window.noteAPI?.openExternal(url);
                 }
             });
+
+            // Initialize language
+            if (window.noteAPI) {
+                const settings = await window.noteAPI.getSettings();
+                currentLanguage = settings.language || 'en';
+                applyTranslations();
+            }
 
             await loadNotes();
 
@@ -1399,6 +1470,33 @@
             });
 
             document.getElementById('noteContent').innerHTML = marked.parse(content);
+
+            // After rendering, resolve local image paths
+            const images = document.getElementById('noteContent').querySelectorAll('img');
+            images.forEach(async (img) => {
+                const src = img.getAttribute('src');
+                // If it's a local filename (not a URL and no path separators)
+                if (src && !src.startsWith('http') && !src.includes('/') && !src.includes('\\')) {
+                    if (window.noteAPI && window.noteAPI.getImagePath) {
+                        try {
+                            const fullPath = await window.noteAPI.getImagePath(src);
+                            if (fullPath) {
+                                // For Windows paths, ensure they work with file protocol
+                                const formattedPath = fullPath.replace(/\\/g, '/');
+                                img.src = `file:///${formattedPath}`;
+                                // Add error handler if image fails to load
+                                img.onerror = () => {
+                                    console.warn('Failed to load local image:', fullPath);
+                                    // Optionally set a fallback icon
+                                };
+                            }
+                        } catch (e) {
+                            console.error('Error resolving image path:', src, e);
+                        }
+                    }
+                }
+            });
+
             document.getElementById('lastEdited').textContent = `Last edited ${getTimeAgo(note.updatedAt)}`;
             document.getElementById('wordCount').textContent = `${countWords(note.content)} words`;
 
@@ -1818,6 +1916,73 @@
             });
         }
 
+        // Fetch AI Product Trends button
+        const btnFetchAIProductTrends = document.getElementById('btnFetchAIProductTrends');
+        const aiProductTrendsButtonText = document.getElementById('aiProductTrendsButtonText');
+
+        if (btnFetchAIProductTrends) {
+            btnFetchAIProductTrends.addEventListener('click', async () => {
+                if (!window.noteAPI) return;
+
+                // Disable button and show loading state
+                btnFetchAIProductTrends.disabled = true;
+                const originalText = aiProductTrendsButtonText.textContent;
+                aiProductTrendsButtonText.textContent = 'Fetching...';
+                btnFetchAIProductTrends.style.opacity = '0.7';
+
+                try {
+                    // Call the API
+                    const newNote = await window.noteAPI.fetchAIProductTrends();
+
+                    // Success feedback
+                    aiProductTrendsButtonText.textContent = 'Success!';
+                    setTimeout(() => {
+                        aiProductTrendsButtonText.textContent = originalText;
+                        btnFetchAIProductTrends.style.opacity = '1';
+                        btnFetchAIProductTrends.disabled = false;
+                    }, 2000);
+
+                    // Auto-select the new note
+                    await loadNotes();
+                    if (newNote && newNote.id) {
+                        const note = notes.find(n => n.id === newNote.id);
+                        if (note) {
+                            showNoteDetail(note);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch AI Product Trends:', error);
+
+                    // Error feedback
+                    aiProductTrendsButtonText.textContent = 'Failed';
+                    setTimeout(() => {
+                        aiProductTrendsButtonText.textContent = originalText;
+                        btnFetchAIProductTrends.style.opacity = '1';
+                        btnFetchAIProductTrends.disabled = false;
+                    }, 3000);
+
+                    // Show error alert
+                    alert(`获取AI产品趋势失败:\n${error.message || '未知错误'}\n\n请检查:\n1. Python 是否已安装\n2. requests/beautifulsoup4 库是否已安装\n3. 网络连接是否正常`);
+                }
+            });
+        }
+
+        // Translate Note button - Placeholder for future implementation
+        // TODO: Implement a better translation solution that:
+        // - Preserves Markdown formatting and text styles
+        // - Keeps images and links intact
+        // - Only translates the overview section from English to Chinese
+        const btnTranslateNote = document.getElementById('btnTranslateNote');
+
+        if (btnTranslateNote) {
+            btnTranslateNote.addEventListener('click', async () => {
+                if (!selectedNoteId) return;
+
+                // Placeholder: Show development message
+                showToast('Translation feature is under development', 'info');
+            });
+        }
+
         // Utility functions
         function escapeHtml(text) {
             const div = document.createElement('div');
@@ -1968,6 +2133,12 @@
             updateThemePickerUI();
 
             document.getElementById('autoLaunchCheckbox').checked = settings.autoLaunch || false;
+            document.getElementById('hoverToShowTodoListCheckbox').checked = settings.hoverToShowTodoList !== false;
+
+            // Populate Language
+            currentLanguage = settings.language || 'en';
+            document.getElementById('languageSelect').value = currentLanguage;
+            applyTranslations();
 
             // Populate Dify Configuration
             document.getElementById('difyBaseUrlInput').value = settings.difyBaseUrl || '';
@@ -2063,6 +2234,7 @@
             const newDifyApiKey = document.getElementById('difyApiKeyInput').value.trim();
             const newModelscopeApiKey = document.getElementById('modelscopeApiKeyInput').value.trim();
             const newAutoLaunch = document.getElementById('autoLaunchCheckbox').checked;
+            const newHoverToShowTodoList = document.getElementById('hoverToShowTodoListCheckbox').checked;
 
             const newSettings = {
                 dataPath: newPath,
@@ -2074,7 +2246,9 @@
                 difyBaseUrl: newDifyBaseUrl,
                 difyApiKey: newDifyApiKey,
                 modelscopeApiKey: newModelscopeApiKey,
-                autoLaunch: newAutoLaunch
+                autoLaunch: newAutoLaunch,
+                hoverToShowTodoList: newHoverToShowTodoList,
+                language: document.getElementById('languageSelect').value
             };
 
             const result = await window.noteAPI.saveSettings(newSettings);
@@ -2181,6 +2355,29 @@
             const newCursorPos = lineStart + headingPrefix.length;
             editContentTextarea.selectionStart = editContentTextarea.selectionEnd = newCursorPos;
             editContentTextarea.focus();
+        }
+
+        // Apply translations to elements with data-i18n attribute
+        function applyTranslations() {
+            if (typeof languages === 'undefined') return;
+
+            const lang = currentLanguage || 'en';
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (languages[lang] && languages[lang][key]) {
+                    el.textContent = languages[lang][key];
+                }
+            });
+        }
+
+        // Listen for settings updates (for dynamic language switching)
+        if (window.noteAPI) {
+            window.noteAPI.onSettingsUpdated((settings) => {
+                if (settings.language && settings.language !== currentLanguage) {
+                    currentLanguage = settings.language;
+                    applyTranslations();
+                }
+            });
         }
     </script>
     <!-- Toast Container -->

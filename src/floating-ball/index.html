@@ -395,27 +395,52 @@
 
         <!-- Todo List Panel -->
         <div id="todo-list">
-            <div class="todo-header">Todo List</div>
+            <div class="todo-header" data-i18n="todoList">Todo List</div>
             <ul class="todo-items" id="todo-items-list">
                 <li class="todo-item">
                     <input type="checkbox" class="todo-checkbox">
-                    <input type="text" class="todo-text" value="点击编辑待办" placeholder="输入待办...">
+                    <input type="text" class="todo-text" value="" data-placeholder="todoPlaceholder">
                 </li>
             </ul>
             <div class="todo-footer">
                 <div class="add-todo" id="add-todo-btn" style="margin-top: 0; font-size: 20px;">+</div>
-                <button class="export-btn" id="export-todo-btn">导出为 Note</button>
+                <button class="export-btn" id="export-todo-btn" data-i18n="exportToNote">Export to Note</button>
             </div>
         </div>
     </div>
 
+    <script src="../i18n/languages.js"></script>
     <script>
         const robot = document.getElementById('robot-container');
         let isDragging = false;
-        let dragOffsetX, dragOffsetY; // 鼠标距离窗口左上角的偏移量
-        let startScreenX, startScreenY; // 拖拽开始时的屏幕坐标，用于判断是否仅仅是点击
+        let dragOffsetX, dragOffsetY;
+        let startScreenX, startScreenY;
         let hasMoved = false;
 
+        // Setting for hover to show todo list
+        let hoverToShowTodoList = true;
+        let currentLanguage = 'en';
+
+        // Apply translations
+        function applyTranslations() {
+            if (typeof languages === 'undefined') return;
+            const lang = currentLanguage || 'en';
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (languages[lang] && languages[lang][key]) {
+                    el.textContent = languages[lang][key];
+                }
+            });
+
+            // Update placeholders
+            document.querySelectorAll('[data-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-placeholder');
+                if (languages[lang] && languages[lang][key]) {
+                    el.placeholder = languages[lang][key];
+                }
+            });
+        }
         // Initialize size and theme from settings
         if (window.noteAPI) {
             window.noteAPI.getSettings().then(settings => {
@@ -426,6 +451,13 @@
                 // Apply theme
                 const theme = settings.floatingBallTheme || 'classic';
                 document.documentElement.setAttribute('data-theme', theme);
+
+                // Apply hover to show todo list setting
+                hoverToShowTodoList = settings.hoverToShowTodoList !== false;
+
+                // Apply language
+                currentLanguage = settings.language || 'en';
+                applyTranslations();
             });
 
             window.noteAPI.onSettingsUpdated((settings) => {
@@ -436,6 +468,15 @@
                 if (settings.floatingBallTheme) {
                     console.log('Theme updated:', settings.floatingBallTheme);
                     document.documentElement.setAttribute('data-theme', settings.floatingBallTheme);
+                }
+                if (settings.hoverToShowTodoList !== undefined) {
+                    console.log('Hover to show todo list updated:', settings.hoverToShowTodoList);
+                    hoverToShowTodoList = settings.hoverToShowTodoList;
+                }
+                if (settings.language && settings.language !== currentLanguage) {
+                    console.log('Language updated:', settings.language);
+                    currentLanguage = settings.language;
+                    applyTranslations();
                 }
             });
         }
@@ -670,6 +711,7 @@
 
         wrapper.addEventListener('mouseenter', () => {
             if (isDragging) return;
+            if (!hoverToShowTodoList) return;
 
             // If we are shrinking, cancel it
             if (shrinkTimeout) {

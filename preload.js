@@ -40,6 +40,12 @@ contextBridge.exposeInMainWorld('noteAPI', {
     // AI News
     fetchAINews: () => ipcRenderer.invoke('fetch-ai-news'),
 
+    // AI Product Trends
+    fetchAIProductTrends: () => ipcRenderer.invoke('fetch-ai-product-trends'),
+
+    // Translate note content
+    translateNoteContent: (content) => ipcRenderer.invoke('translate-note-content', content),
+
     // Export
     exportNote: (noteId, format) => ipcRenderer.invoke('export-note', noteId, format),
     exportNotesBatch: (noteIds, format) => ipcRenderer.invoke('export-notes-batch', noteIds, format),

@@ -336,7 +336,7 @@
                     class="text-base font-bold leading-tight tracking-tight truncate px-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-text"
                     title="Double click to rename">Orbital Notes</h2>
                 <span id="saveStatus" class="text-xs text-gray-400 dark:text-gray-500 font-medium ml-2 flex-shrink-0">*
-                    Unsaved</span>
+                    <span data-i18n="unsaved">Unsaved</span></span>
             </div>
             <div class="flex gap-1 flex-shrink-0">
                 <button id="btnPin"
@@ -376,7 +376,7 @@
                     <button id="addTagBtn"
                         class="flex h-7 items-center justify-center gap-x-1.5 rounded-full bg-transparent border border-dashed border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary pl-3 pr-3 transition-colors cursor-pointer">
                         <span class="material-symbols-outlined text-[16px] text-gray-400 dark:text-gray-500">add</span>
-                        <span class="text-gray-500 dark:text-gray-400 text-xs font-medium">Tag</span>
+                        <span class="text-gray-500 dark:text-gray-400 text-xs font-medium" data-i18n="tag">Tag</span>
                     </button>
                 </div>
 
@@ -451,7 +451,7 @@
                         <button id="btnSave"
                             class="flex items-center justify-center rounded-lg h-9 px-4 bg-primary hover:opacity-90 text-white gap-2 text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95">
                             <span class="material-symbols-outlined text-[20px]">save</span>
-                            <span>Save</span>
+                            <span data-i18n="save">Save</span>
                         </button>
                     </div>
                 </div>
@@ -486,6 +486,7 @@
     <!-- Toast Container -->
     <div id="toastContainer"></div>
 
+    <script src="../i18n/languages.js"></script>
     <script>
         // State
         let currentNoteId = null;
@@ -493,6 +494,41 @@
         let images = [];
         let hasUnsavedChanges = false;
         let isPreviewMode = false;
+        let currentLanguage = 'en';
+
+        // Apply translations
+        function applyTranslations() {
+            if (typeof languages === 'undefined') return;
+            const lang = currentLanguage || 'en';
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (languages[lang] && languages[lang][key]) {
+                    el.textContent = languages[lang][key];
+                }
+            });
+
+            // Update placeholder
+            const noteContentEl = document.getElementById('noteContent');
+            if (noteContentEl && languages[lang] && languages[lang]['typeSomething']) {
+                noteContentEl.placeholder = languages[lang]['typeSomething'];
+            }
+        }
+
+        // Initialize language from settings
+        if (window.noteAPI) {
+            window.noteAPI.getSettings().then(settings => {
+                currentLanguage = settings.language || 'en';
+                applyTranslations();
+            });
+
+            window.noteAPI.onSettingsUpdated((settings) => {
+                if (settings.language && settings.language !== currentLanguage) {
+                    currentLanguage = settings.language;
+                    applyTranslations();
+                }
+            });
+        }
 
         // DOM Elements
         const noteContent = document.getElementById('noteContent');
