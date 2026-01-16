@@ -18,21 +18,25 @@ const configStore = new Store({
 });
 
 // Determine data path - use userData path for packaged app
-const getUserDataPath = () => {
+// Note: This function should only be called after app is ready
+let defaultDataPath;
+let currentDataPath;
+let currentImagesPath;
+
+function getUserDataPath() {
     if (app.isPackaged) {
         return path.join(app.getPath('userData'), 'data');
     } else {
         return path.join(__dirname, 'data');
     }
-};
-
-const defaultDataPath = getUserDataPath();
-let currentDataPath = configStore.get('dataPath', defaultDataPath);
-let currentImagesPath;
+}
 
 // Initialize data store
 let store;
 function initStore() {
+    defaultDataPath = getUserDataPath();
+    currentDataPath = configStore.get('dataPath', defaultDataPath);
+
     store = new Store({
         name: 'notes-data',
         cwd: currentDataPath,
@@ -67,8 +71,7 @@ function ensureDataDirs(basePath) {
     }
 }
 
-// Initialize immediately
-initStore();
+// Store will be initialized when app is ready
 
 // Window references
 let floatingBallWindow = null;
@@ -373,6 +376,9 @@ function createNoteManagerWindow() {
 
 // App ready
 app.whenReady().then(() => {
+    // Initialize store after app is ready (when getPath is available)
+    initStore();
+
     createTray();
     createFloatingBallWindow();
     registerGlobalShortcut();
@@ -1281,7 +1287,14 @@ ipcMain.handle('fetch-ai-news', async () => {
 ipcMain.handle('fetch-ai-product-trends', async () => {
     return new Promise((resolve, reject) => {
         const { exec } = require('child_process');
-        const scriptPath = path.join(__dirname, 'scrape_ai_tools.py');
+
+        // In packaged app, script is in resources folder; in dev mode, it's in project root
+        let scriptPath;
+        if (app.isPackaged) {
+            scriptPath = path.join(process.resourcesPath, 'scrape_ai_tools.py');
+        } else {
+            scriptPath = path.join(__dirname, 'scrape_ai_tools.py');
+        }
 
         // Check if script exists
         if (!fs.existsSync(scriptPath)) {
@@ -1295,15 +1308,48 @@ ipcMain.handle('fetch-ai-product-trends', async () => {
         // Pass the correct images directory
         const imagesDir = currentImagesPath.replace(/\\/g, '/');
 
+        // Use shell: true on Windows to properly resolve python command
         exec(`${pythonCmd} "${scriptPath}" --images-dir "${imagesDir}"`, {
-            cwd: __dirname,
+            cwd: app.isPackaged ? process.resourcesPath : __dirname,
+            shell: true,
             maxBuffer: 1024 * 1024 * 10, // 10MB buffer for large output
             timeout: 120000 // 2 minute timeout
         }, (error, stdout, stderr) => {
             if (error) {
                 console.error('Python script error:', error);
                 console.error('Stderr:', stderr);
-                return reject(new Error(`Script execution failed: ${error.message}`));
+
+                // Parse error to provide user-friendly message
+                const errorOutput = stderr || error.message || '';
+
+                // Check for missing module errors
+                const moduleMatch = errorOutput.match(/No module named ['\"]?(\w+)['\"]?/i) ||
+                    errorOutput.match(/ModuleNotFoundError.*['\"](\w+)['\"]/) ||
+                    errorOutput.match(/ImportError.*['\"](\w+)['\"]?/);
+
+                if (moduleMatch) {
+                    const moduleName = moduleMatch[1];
+                    const moduleMap = {
+                        'bs4': 'beautifulsoup4',
+                        'BeautifulSoup': 'beautifulsoup4',
+                        'requests': 'requests'
+                    };
+                    const installName = moduleMap[moduleName] || moduleName;
+                    return reject(new Error(`MISSING_MODULE:${installName}`));
+                }
+
+                // Check for Python not found
+                if (errorOutput.includes('python') && (errorOutput.includes('not recognized') || errorOutput.includes('not found') || errorOutput.includes('ENOENT'))) {
+                    return reject(new Error('PYTHON_NOT_FOUND'));
+                }
+
+                // Check for network errors
+                if (errorOutput.includes('ConnectionError') || errorOutput.includes('TimeoutError') || errorOutput.includes('getaddrinfo')) {
+                    return reject(new Error('NETWORK_ERROR'));
+                }
+
+                // Generic error
+                return reject(new Error('UNKNOWN_ERROR'));
             }
 
             // Log stderr (progress info)

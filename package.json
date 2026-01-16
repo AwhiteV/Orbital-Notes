@@ -43,8 +43,8 @@
     ],
     "extraResources": [
       {
-        "from": "data",
-        "to": "data"
+        "from": "scrape_ai_tools.py",
+        "to": "scrape_ai_tools.py"
       }
     ]
   }

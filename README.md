@@ -64,6 +64,12 @@
    - 在根目录执行依赖安装：`npm install`。
    - 启动应用：`npm start`。
 
+### ⚠️ 特别说明 (AI 产品新趋势)
+由于安装包 (`.exe`) 不包含 Python 运行时，如需使用 **"AI 产品新趋势"** 功能，请确保您的电脑：
+1. 已安装 [Python](https://www.python.org/downloads/)。
+2. 已安装必要依赖库：`pip install requests beautifulsoup4`。
+*(若未安装，应用内会弹出友好的引导提示)*
+
 ### 🤖 Dify 工作流配置
 如果您需要使用 AI Daily News 功能，请导入 `dify_workflow` 目录下的 `Ai_news.yml` 工作流文件到您的 Dify 平台。
 

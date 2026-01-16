@@ -1091,6 +1091,30 @@
         </div>
     </div>
 
+    <!-- Python Dependency Modal -->
+    <div id="pythonDependencyModal" class="modal-overlay">
+        <div class="modal-content dark:bg-surface-dark max-w-md">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary text-[28px]">terminal</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Python Setup Required</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">AI Trends feature needs additional setup</p>
+                </div>
+            </div>
+
+            <div id="pythonModalContent" class="mb-6">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+
+            <div class="flex justify-end">
+                <button id="btnClosePythonModal"
+                    class="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../i18n/languages.js"></script>
     <script>
         // State
@@ -1961,8 +1985,8 @@
                         btnFetchAIProductTrends.disabled = false;
                     }, 3000);
 
-                    // Show error alert
-                    alert(`获取AI产品趋势失败:\n${error.message || '未知错误'}\n\n请检查:\n1. Python 是否已安装\n2. requests/beautifulsoup4 库是否已安装\n3. 网络连接是否正常`);
+                    // Show friendly error modal
+                    showPythonDependencyModal(error.message);
                 }
             });
         }
@@ -2048,6 +2072,85 @@
                 }, 400); // Wait for transition
             }, 3000);
         }
+
+        // ================= Python Dependency Modal =================
+        const pythonModal = document.getElementById('pythonDependencyModal');
+        const pythonModalContent = document.getElementById('pythonModalContent');
+        const btnClosePythonModal = document.getElementById('btnClosePythonModal');
+
+        function showPythonDependencyModal(errorCode) {
+            let content = '';
+
+            if (errorCode && errorCode.startsWith('MISSING_MODULE:')) {
+                const moduleName = errorCode.replace('MISSING_MODULE:', '');
+                content = `
+                    <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
+                        <div class="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-medium mb-2">
+                            <span class="material-symbols-outlined text-[18px]">warning</span>
+                            Missing Python Library
+                        </div>
+                        <p class="text-sm text-amber-600 dark:text-amber-300">
+                            The <code class="bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded font-mono">${moduleName}</code> library is not installed.
+                        </p>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
+                        <p class="text-sm text-slate-600 dark:text-slate-300 mb-2">Run this command in your terminal:</p>
+                        <code class="block bg-slate-900 text-green-400 px-3 py-2 rounded font-mono text-sm select-all">pip install ${moduleName}</code>
+                    </div>
+                `;
+            } else if (errorCode === 'PYTHON_NOT_FOUND') {
+                content = `
+                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+                        <div class="flex items-center gap-2 text-red-700 dark:text-red-400 font-medium mb-2">
+                            <span class="material-symbols-outlined text-[18px]">error</span>
+                            Python Not Found
+                        </div>
+                        <p class="text-sm text-red-600 dark:text-red-300">
+                            Python is not installed or not in your system PATH.
+                        </p>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
+                        <p class="text-sm text-slate-600 dark:text-slate-300 mb-2">Please install Python from:</p>
+                        <a href="https://www.python.org/downloads/" target="_blank" 
+                           class="text-primary hover:underline text-sm">https://www.python.org/downloads/</a>
+                    </div>
+                `;
+            } else if (errorCode === 'NETWORK_ERROR') {
+                content = `
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <div class="flex items-center gap-2 text-blue-700 dark:text-blue-400 font-medium mb-2">
+                            <span class="material-symbols-outlined text-[18px]">wifi_off</span>
+                            Network Error
+                        </div>
+                        <p class="text-sm text-blue-600 dark:text-blue-300">
+                            Unable to connect to the internet. Please check your network connection and try again.
+                        </p>
+                    </div>
+                `;
+            } else {
+                content = `
+                    <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
+                        <p class="text-sm text-slate-600 dark:text-slate-300">
+                            An unexpected error occurred. Please ensure Python and required libraries are installed:
+                        </p>
+                        <code class="block bg-slate-900 text-green-400 px-3 py-2 rounded font-mono text-sm mt-3 select-all">pip install requests beautifulsoup4</code>
+                    </div>
+                `;
+            }
+
+            pythonModalContent.innerHTML = content;
+            pythonModal.classList.add('show');
+        }
+
+        btnClosePythonModal?.addEventListener('click', () => {
+            pythonModal.classList.remove('show');
+        });
+
+        pythonModal?.addEventListener('click', (e) => {
+            if (e.target === pythonModal) {
+                pythonModal.classList.remove('show');
+            }
+        });
 
         // ================= Settings Logic =================
         const settingsModal = document.getElementById('settingsModal');
